@@ -2,7 +2,7 @@
 
 class MotorController {
 
-  protected: 
+  private: 
     uint8_t _enL, _in1, _in2, _in3, _in4, _enR; // Các chân điều khiển động cơ của L298N
 
   public:

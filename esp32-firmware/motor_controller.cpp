@@ -1,5 +1,5 @@
-#include <motor_controller.h>
 #include <Arduino.h>
+#include <motor_controller.h>
 
 MotorController::MotorController(uint8_t enL, uint8_t in1, uint8_t in2, uint8_t in3, uint8_t in4, uint8_t enR)
 {
