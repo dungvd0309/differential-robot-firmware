@@ -27,12 +27,12 @@ void MotorEncoders::init()
 
 void IRAM_ATTR MotorEncoders::updateLeft()
 {
-    if (digitalRead(_s1l) == HIGH) leftCount++; else leftCount--;
+    if (digitalRead(_s2l) == HIGH) leftCount++; else leftCount--;
 }
 
 void IRAM_ATTR MotorEncoders::updateRight()
 {
-    if (digitalRead(_s1r) == HIGH) rightCount--; else rightCount++;
+    if (digitalRead(_s2r) == HIGH) rightCount--; else rightCount++;
 }
 
 void IRAM_ATTR MotorEncoders::isrLeft()  { if (_instance) _instance->updateLeft(); }
