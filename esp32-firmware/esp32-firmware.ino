@@ -1,7 +1,8 @@
-#TODO: tách file quản lý ros, freertos
-#include "micro_ros_dungvd.h"
+//TODO: tách file quản lý ros, freertos
+#include "ros_interface.h"
 #include "motor_controller.h"
 #include "motor_encoders.h"
+#include "rtos_tasks.h"
 
 // ===== KHAI BÁO CHÂN ===== //
 #define ENA 12
@@ -34,7 +35,7 @@ void setup()
   controller.init();
   controller.movePWM(255,255);
 
-  micro_ros_init();
+  start_tasks();
 }
 
 int temp = 0;
@@ -56,5 +57,5 @@ void loop()
   // Serial.print(" | ");
   // Serial.println(temp / WHEEL_CPR);
   micro_ros_data_publish(temp);
-  micro_ros_spin();
+  
 }
