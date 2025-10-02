@@ -1,15 +1,18 @@
+#TODO: tách file quản lý ros, freertos
+#include "micro_ros_dungvd.h"
 #include "motor_controller.h"
 #include "motor_encoders.h"
 
 // ===== KHAI BÁO CHÂN ===== //
-#define ENA 11
-#define IN1 10
-#define IN2 9
-#define IN3 12
-#define IN4 13
-#define ENB 14
-#define S1L 4
-#define S2L 5
+#define ENA 12
+#define IN1 13
+#define IN2 14
+#define IN3 25
+#define IN4 26
+#define ENB 27
+
+#define S1L 22
+#define S2L 23
 // ===== END ===== //
 
 // ===== KHAI BÁO HẰNG SỐ ===== //
@@ -21,7 +24,7 @@ const double WHEEL_CPR = GEAR_RATIO * MOTOR_CPR * DECODE_FACTOR; // số xung tr
 const int WHEEL_DIAMETER = 65;       // đường kính bánh xe (mm)
 // ===== END ===== //
  
-MotorEncoders encoders(4, 5);
+MotorEncoders encoders(S1L, S2L);
 MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
 
 void setup()
@@ -30,25 +33,28 @@ void setup()
   encoders.init();
   controller.init();
   controller.movePWM(255,255);
+
+  micro_ros_init();
 }
 
 int temp = 0;
 
 void loop()
 {
-  if (Serial.available() > 0) {
-    int v = Serial.parseInt(); 
-    if (v != 0 || Serial.peek() == '0') { // phân biệt được số 0 hợp lệ
-      controller.movePWM(v, v);
-      Serial.print("Da nhan: ");
-      Serial.println(v);
-    }
-    while (Serial.available() && Serial.read() != '\n') { /* flush line */ }
-  }
+  // if (Serial.available() > 0) {
+  //   int v = Serial.parseInt(); 
+  //   if (v != 0 || Serial.peek() == '0') { // phân biệt được số 0 hợp lệ
+  //     controller.movePWM(v, v);
+  //     Serial.print("Da nhan: ");
+  //     Serial.println(v);
+  //   }
+  //   while (Serial.available() && Serial.read() != '\n') { /* flush line */ }
+  // }
   
   temp = encoders.getLeftCount();
-  Serial.print(temp);
-  Serial.print(" | ");
-  Serial.println(temp / WHEEL_CPR);
-  delay(50);
+  // Serial.print(temp);
+  // Serial.print(" | ");
+  // Serial.println(temp / WHEEL_CPR);
+  micro_ros_data_publish(temp);
+  micro_ros_spin();
 }
