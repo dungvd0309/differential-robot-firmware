@@ -1,4 +1,5 @@
 //TODO: tách file quản lý ros, freertos
+//TODO: đổi lại các biến thành snake_case
 //Note: esp32 library v2.0.2
 #include "ros_interface.h"
 #include "motor_encoders.h"
@@ -37,27 +38,12 @@ void setup()
   // controller.init();
   // controller.movePWM(255,255);
 
-  start_tasks();
+  start_tasks(); //
 }
-
-int temp = 0;
 
 void loop()
 {
-  // if (Serial.available() > 0) {
-  //   int v = Serial.parseInt(); 
-  //   if (v != 0 || Serial.peek() == '0') { // phân biệt được số 0 hợp lệ
-  //     controller.movePWM(v, v);
-  //     Serial.print("Da nhan: ");
-  //     Serial.println(v);
-  //   }
-  //   while (Serial.available() && Serial.read() != '\n') { /* flush line */ }
-  // }
-  
-  temp = encoders.getLeftCount();
-  // Serial.print(temp);
-  // Serial.print(" | ");
-  // Serial.println(temp / WHEEL_CPR);
-  micro_ros_data_publish(int(temp / WHEEL_CPR * 360) % 360);
-  
+  double total_revolutions = (double)encoders.getLeftCount() / WHEEL_CPR;
+  float current_angle_rad = total_revolutions * 2 * PI;
+  micro_ros_data_publish(current_angle_rad);
 }

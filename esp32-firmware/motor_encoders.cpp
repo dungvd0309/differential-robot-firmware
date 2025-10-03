@@ -27,16 +27,16 @@ void MotorEncoders::init()
 
 void IRAM_ATTR MotorEncoders::updateLeft()
 {
-    if (digitalRead(_s2l) == HIGH) leftCount++; else leftCount--;
+    if (digitalRead(_s2l) == HIGH) _left_count++; else _left_count--;
 }
 
 void IRAM_ATTR MotorEncoders::updateRight()
 {
-    if (digitalRead(_s2r) == HIGH) rightCount--; else rightCount++;
+    if (digitalRead(_s2r) == HIGH) _right_count--; else _right_count++;
 }
 
 void IRAM_ATTR MotorEncoders::isrLeft()  { if (_instance) _instance->updateLeft(); }
 void IRAM_ATTR MotorEncoders::isrRight() { if (_instance) _instance->updateRight(); }
 
-long MotorEncoders::getLeftCount() const { return leftCount; }
-long MotorEncoders::getRightCount() const{ return rightCount; }
+long MotorEncoders::getLeftCount() const { return _left_count; }
+long MotorEncoders::getRightCount() const{ return _right_count; }

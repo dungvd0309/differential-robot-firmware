@@ -8,11 +8,11 @@
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 
-#include <std_msgs/msg/int32.h>
+#include <std_msgs/msg/float32.h>
 
 // Global variable declarations
 extern rcl_publisher_t publisher;
-extern std_msgs__msg__Int32 msg;
+extern std_msgs__msg__Float32 msg;
 extern rclc_executor_t executor;
 extern rclc_support_t support;
 extern rcl_allocator_t allocator;
@@ -29,7 +29,7 @@ void error_loop();
 
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time);
 
-void micro_ros_data_publish(int pose);
+void micro_ros_data_publish(float pose);
 
 void ros_init();
 

@@ -1,7 +1,7 @@
 #include "ros_interface.h"
 
-rcl_publisher_t publisher;
-std_msgs__msg__Int32 msg;
+rcl_publisher_t publisher; 
+std_msgs__msg__Float32 msg; 
 rclc_executor_t executor;
 rclc_support_t support;
 rcl_allocator_t allocator;
@@ -24,7 +24,7 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
     }
 }
 
-void micro_ros_data_publish(int pose)
+void micro_ros_data_publish(float pose)
 {
     msg.data = pose;
 }
@@ -44,13 +44,13 @@ void ros_init()
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
     // create node
-    RCCHECK(rclc_node_init_default(&node, "pham_duc_duy_node", "", &support));
+    RCCHECK(rclc_node_init_default(&node, "hardware_node", "", &support));
 
     // create publisher
     RCCHECK(rclc_publisher_init_best_effort(
         &publisher,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), 
         "wheel_pose"));
     
     // create timer,
