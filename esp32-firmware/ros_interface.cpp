@@ -26,7 +26,7 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 
 void micro_ros_data_publish(int pose)
 {
-  msg.data = pose;
+    msg.data = pose;
 }
 
 void ros_init()
@@ -47,14 +47,14 @@ void ros_init()
     RCCHECK(rclc_node_init_default(&node, "pham_duc_duy_node", "", &support));
 
     // create publisher
-    RCCHECK(rclc_publisher_init_default(
+    RCCHECK(rclc_publisher_init_best_effort(
         &publisher,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
         "wheel_pose"));
     
     // create timer,
-    const unsigned int timer_timeout = 10;
+    const unsigned int timer_timeout = 4; // 250hz
     RCCHECK(rclc_timer_init_default(
         &timer,
         &support,

@@ -1,7 +1,9 @@
 //TODO: tách file quản lý ros, freertos
+//Note: esp32 library v2.0.2
 #include "ros_interface.h"
-#include "motor_controller.h"
 #include "motor_encoders.h"
+// #include "motor_controller.h"
+
 #include "rtos_tasks.h"
 
 // ===== KHAI BÁO CHÂN ===== //
@@ -26,14 +28,14 @@ const int WHEEL_DIAMETER = 65;       // đường kính bánh xe (mm)
 // ===== END ===== //
  
 MotorEncoders encoders(S1L, S2L);
-MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
+// MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(921600); 
   encoders.init();
-  controller.init();
-  controller.movePWM(255,255);
+  // controller.init();
+  // controller.movePWM(255,255);
 
   start_tasks();
 }
@@ -56,6 +58,6 @@ void loop()
   // Serial.print(temp);
   // Serial.print(" | ");
   // Serial.println(temp / WHEEL_CPR);
-  micro_ros_data_publish(temp);
+  micro_ros_data_publish(int(temp / WHEEL_CPR * 360) % 360);
   
 }
