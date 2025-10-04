@@ -7,11 +7,14 @@
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
+#include <rosidl_runtime_c/string_functions.h>
 
 #include <std_msgs/msg/float32.h>
+#include <sensor_msgs/msg/joint_state.h>
 
 // Global variable declarations
 extern rcl_publisher_t publisher;
+extern sensor_msgs__msg__JointState pub_msg;
 extern std_msgs__msg__Float32 msg;
 extern rclc_executor_t executor;
 extern rclc_support_t support;

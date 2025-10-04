@@ -1,6 +1,7 @@
 #include "ros_interface.h"
 
 rcl_publisher_t publisher; 
+sensor_msgs__msg__JointState pub_msg;
 std_msgs__msg__Float32 msg; 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -19,14 +20,34 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
+        RCSOFTCHECK(rcl_publish(&publisher, &pub_msg, NULL));
         // msg.data++;
     }
 }
 
+// TODO: init msg function, update msg function
+
 void micro_ros_data_publish(float pose)
 {
-    msg.data = pose;
+    // sensor_msgs__msg__JointState
+    // string[] name
+    pub_msg.name.capacity = 1;
+    pub_msg.name.data = (rosidl_runtime_c__String*)malloc(pub_msg.name.capacity * sizeof(rosidl_runtime_c__String));
+    pub_msg.name.size = 1;
+    rosidl_runtime_c__String__init(&pub_msg.name.data[0]);
+    rosidl_runtime_c__String__assign(&pub_msg.name.data[0], "wheel_joint");
+
+    // float64[] position
+    pub_msg.position.capacity = 1;
+    pub_msg.position.data = (double*)malloc(pub_msg.position.capacity * sizeof(double));
+    pub_msg.position.size = 1;
+    pub_msg.position.data[0] = pose;
+
+    // velocity/effort rỗng
+    pub_msg.velocity.size = 0;
+    pub_msg.velocity.data = NULL;
+    pub_msg.effort.size = 0;
+    pub_msg.effort.data = NULL;
 }
 
 void ros_init()
@@ -50,7 +71,7 @@ void ros_init()
     RCCHECK(rclc_publisher_init_best_effort(
         &publisher,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), 
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState), 
         "wheel_pose"));
     
     // create timer,
