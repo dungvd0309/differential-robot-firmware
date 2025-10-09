@@ -1,13 +1,13 @@
 #include "ros_interface.h"
 
-rcl_publisher_t publisher; 
-sensor_msgs__msg__JointState pub_msg;
-std_msgs__msg__Float32 msg; 
-rclc_executor_t executor;
-rclc_support_t support;
-rcl_allocator_t allocator;
-rcl_node_t node;
-rcl_timer_t timer;
+static rcl_publisher_t publisher; 
+static sensor_msgs__msg__JointState pub_msg;
+static rclc_executor_t executor;
+static rclc_support_t support;
+static rcl_allocator_t allocator;
+static rcl_node_t node;
+static rcl_timer_t timer;
+static volatile float joint_pose = 0.0;
 
 void error_loop() {
     while(1) {
@@ -16,38 +16,33 @@ void error_loop() {
     }
 }
 
-void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
+static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
+        pub_msg.position.data[0] = joint_pose;
         RCSOFTCHECK(rcl_publish(&publisher, &pub_msg, NULL));
         // msg.data++;
     }
 }
 
-// TODO: init msg function, update msg function
-
-void micro_ros_data_publish(float pose)
+// Initialize ROS message function
+static void ros_msg_init()
 {
-    // sensor_msgs__msg__JointState
-    // string[] name
-    pub_msg.name.capacity = 1;
-    pub_msg.name.data = (rosidl_runtime_c__String*)malloc(pub_msg.name.capacity * sizeof(rosidl_runtime_c__String));
-    pub_msg.name.size = 1;
-    rosidl_runtime_c__String__init(&pub_msg.name.data[0]);
-    rosidl_runtime_c__String__assign(&pub_msg.name.data[0], "wheel_joint");
+    const char * joint_names[] = {"wheel_joint"};
+    sensor_msgs__msg__JointState__init(&pub_msg);
+    rosidl_runtime_c__String__Sequence__init(&pub_msg.name, 1);
+    rosidl_runtime_c__String__assign(&pub_msg.name.data[0], joint_names[0]);
 
-    // float64[] position
-    pub_msg.position.capacity = 1;
-    pub_msg.position.data = (double*)malloc(pub_msg.position.capacity * sizeof(double));
+    pub_msg.position.data = (double*)malloc(sizeof(double) * 1);
     pub_msg.position.size = 1;
-    pub_msg.position.data[0] = pose;
+    pub_msg.position.capacity = 1;
+    pub_msg.position.data[0] = 0;
+}
 
-    // velocity/effort rỗng
-    pub_msg.velocity.size = 0;
-    pub_msg.velocity.data = NULL;
-    pub_msg.effort.size = 0;
-    pub_msg.effort.data = NULL;
+void ros_msg_update(float pose)
+{
+    joint_pose = pose;
 }
 
 void ros_init()
@@ -61,7 +56,7 @@ void ros_init()
 
     allocator = rcl_get_default_allocator();
 
-    //create init_options
+    // create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
     // create node
@@ -74,7 +69,7 @@ void ros_init()
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState), 
         "wheel_pose"));
     
-    // create timer,
+    // create timer
     const unsigned int timer_timeout = 4; // 250hz
     RCCHECK(rclc_timer_init_default(
         &timer,
@@ -86,7 +81,8 @@ void ros_init()
     RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
     RCCHECK(rclc_executor_add_timer(&executor, &timer));
 
-    msg.data = 0;
+    ros_msg_init();
+    digitalWrite(LED_PIN, LOW);
 }      
 
 void ros_spin_some(int delay)

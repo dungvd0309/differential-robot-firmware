@@ -45,5 +45,5 @@ void loop()
 {
   double total_revolutions = (double)encoders.getLeftCount() / WHEEL_CPR;
   float current_angle_rad = total_revolutions * 2 * PI;
-  micro_ros_data_publish(current_angle_rad);
+  ros_msg_update(current_angle_rad);
 }
