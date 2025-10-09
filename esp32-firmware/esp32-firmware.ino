@@ -28,7 +28,7 @@ const double WHEEL_CPR = GEAR_RATIO * MOTOR_CPR * DECODE_FACTOR; // số xung tr
 const int WHEEL_DIAMETER = 65;       // đường kính bánh xe (mm)
 // ===== END ===== //
  
-MotorEncoders encoders(S1L, S2L);
+MotorEncoders encoders(S1L, S2L, 255, 255, WHEEL_CPR); 
 // MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
 
 void setup()
@@ -38,12 +38,20 @@ void setup()
   // controller.init();
   // controller.movePWM(255,255);
 
-  start_tasks(); //
+  start_tasks();
 }
 
 void loop()
 {
-  double total_revolutions = (double)encoders.getLeftCount() / WHEEL_CPR;
-  float current_angle_rad = total_revolutions * 2 * PI;
-  ros_msg_update(current_angle_rad);
+  vTaskDelay(pdMS_TO_TICKS(1000)); // The loop task can now sleep
+
+  // FOR TESTING
+  
+  // Serial.print("count: ");
+  // Serial.print(encoders.getLeftCount());
+  // Serial.print(", pos: ");
+  // Serial.print(encoders.getLeftAngle());
+  // Serial.print(", vel: ");
+  // Serial.print(encoders.getLeftAngularVelocity());
+  // Serial.println();
 }

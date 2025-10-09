@@ -2,8 +2,9 @@
 
 MotorEncoders* MotorEncoders::_instance = nullptr;
 
-MotorEncoders::MotorEncoders(uint8_t s1l, uint8_t s2l, uint8_t s1r, uint8_t s2r)
-    : _s1l(s1l), _s2l(s2l), _s1r(s1r), _s2r(s2r)
+MotorEncoders::MotorEncoders(uint8_t s1l, uint8_t s2l, uint8_t s1r, uint8_t s2r
+                            , double wheel_cpr)
+    : _s1l(s1l), _s2l(s2l), _s1r(s1r), _s2r(s2r), _wheel_cpr(wheel_cpr)
 {
     _instance = this; 
 }
@@ -38,5 +39,20 @@ void IRAM_ATTR MotorEncoders::updateRight()
 void IRAM_ATTR MotorEncoders::isrLeft()  { if (_instance) _instance->updateLeft(); }
 void IRAM_ATTR MotorEncoders::isrRight() { if (_instance) _instance->updateRight(); }
 
-long MotorEncoders::getLeftCount() const { return _left_count; }
-long MotorEncoders::getRightCount() const{ return _right_count; }
+// Khoảng thời gian giữa các lần tính vận tốc (ms)
+#define VELOCITY_UPDATE_INTERVAL 50 
+
+void MotorEncoders::updateVelocities()
+{
+    unsigned long current_time = millis();
+    unsigned long dt_ms = current_time - _prev_update_time;
+
+    if (dt_ms < VELOCITY_UPDATE_INTERVAL) return;
+
+    double dt_s = dt_ms / 1000.0; // ms sang s
+    long left_delta = _left_count - _prev_left_count;
+    _left_angular_velocity = (left_delta / _wheel_cpr) * 2 * PI / dt_s;   // rad/s
+
+    _prev_left_count = _left_count;
+    _prev_update_time = current_time;
+}

@@ -1,4 +1,5 @@
 #include "ros_interface.h"
+#include "motor_encoders.h"
 
 static rcl_publisher_t publisher; 
 static sensor_msgs__msg__JointState pub_msg;
@@ -7,7 +8,8 @@ static rclc_support_t support;
 static rcl_allocator_t allocator;
 static rcl_node_t node;
 static rcl_timer_t timer;
-static volatile float joint_pose = 0.0;
+
+extern MotorEncoders encoders; // Use the global encoders object from the .ino file
 
 void error_loop() {
     while(1) {
@@ -20,7 +22,11 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        pub_msg.position.data[0] = joint_pose;
+        // Update values directly before publishing
+        encoders.updateVelocities();
+
+        pub_msg.position.data[0] = encoders.getLeftAngle();
+        pub_msg.velocity.data[0] = encoders.getLeftAngularVelocity();
         RCSOFTCHECK(rcl_publish(&publisher, &pub_msg, NULL));
         // msg.data++;
     }
@@ -38,11 +44,11 @@ static void ros_msg_init()
     pub_msg.position.size = 1;
     pub_msg.position.capacity = 1;
     pub_msg.position.data[0] = 0;
-}
 
-void ros_msg_update(float pose)
-{
-    joint_pose = pose;
+    pub_msg.velocity.data = (double*)malloc(sizeof(double) * 1);
+    pub_msg.velocity.size = 1;
+    pub_msg.velocity.capacity = 1;
+    pub_msg.velocity.data[0] = 0;
 }
 
 void ros_init()
