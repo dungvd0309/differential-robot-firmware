@@ -1,11 +1,8 @@
-//TODO: tách file quản lý ros, freertos
-//TODO: đổi lại các biến thành snake_case
 //Note: esp32 library v2.0.2
 #include "ros_interface.h"
 #include "motor_encoders.h"
 // #include "motor_controller.h"
 
-#include "rtos_tasks.h"
 
 // ===== KHAI BÁO CHÂN ===== //
 #define ENA 12
@@ -38,12 +35,17 @@ void setup()
   // controller.init();
   // controller.movePWM(255,255);
 
-  start_tasks();
+  xTaskCreatePinnedToCore(ros_task, "ros", 8192, NULL, 2, NULL, 0);
+}
+
+void ros_task(void*) {
+  ros_init();
+  for(;;){ ros_spin_some(); vTaskDelay(pdMS_TO_TICKS(1)); }
 }
 
 void loop()
 {
-  vTaskDelay(pdMS_TO_TICKS(1000)); // The loop task can now sleep
+  vTaskDelay(pdMS_TO_TICKS(1000)); 
 
   // FOR TESTING
   
