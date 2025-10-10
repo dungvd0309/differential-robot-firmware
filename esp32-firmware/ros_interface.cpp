@@ -1,6 +1,18 @@
 #include "ros_interface.h"
 #include "motor_encoders.h"
 
+#include <micro_ros_arduino.h>
+
+#include <stdio.h>
+#include <rcl/rcl.h>
+#include <rcl/error_handling.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
+
+#include <std_msgs/msg/float32.h>
+#include <sensor_msgs/msg/joint_state.h>
+#include <rosidl_runtime_c/string_functions.h>
+
 static rcl_publisher_t publisher; 
 static sensor_msgs__msg__JointState pub_msg;
 static rclc_executor_t executor;
@@ -10,6 +22,10 @@ static rcl_node_t node;
 static rcl_timer_t timer;
 
 extern MotorEncoders encoders; // Use the global encoders object from the .ino file
+
+// Macro for checking return codes of rcl functions
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
+#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
 
 void error_loop() {
     while(1) {

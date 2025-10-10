@@ -1,13 +1,13 @@
 //Note: esp32 library v2.0.2
 #include "ros_interface.h"
 #include "motor_encoders.h"
-// #include "motor_controller.h"
+#include "motor_controller.h"
 
 
 // ===== KHAI BÁO CHÂN ===== //
-#define ENA 12
-#define IN1 13
-#define IN2 14
+#define ENA 2
+#define IN1 4
+#define IN2 16
 #define IN3 25
 #define IN4 26
 #define ENB 27
@@ -24,16 +24,16 @@ const int MOTOR_CPR = 11;           // số xung trên 1 vòng encoder (COUNTS_P
 const double WHEEL_CPR = GEAR_RATIO * MOTOR_CPR * DECODE_FACTOR; // số xung trên 1 vòng trục (COUNTS_PER_REVOLUTION)
 const int WHEEL_DIAMETER = 65;       // đường kính bánh xe (mm)
 // ===== END ===== //
- 
+
+MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
 MotorEncoders encoders(S1L, S2L, 255, 255, WHEEL_CPR); 
-// MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
 
 void setup()
 {
   Serial.begin(921600); 
   encoders.init();
-  // controller.init();
-  // controller.movePWM(255,255);
+  controller.init();
+  controller.movePWM(255,255);
 
   xTaskCreatePinnedToCore(ros_task, "ros", 8192, NULL, 2, NULL, 0);
 }
