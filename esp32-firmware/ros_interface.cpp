@@ -23,6 +23,13 @@ static rcl_timer_t timer;
 
 extern MotorEncoders encoders; // Use the global encoders object from the .ino file
 
+#define LED_PIN 2
+
+static char* ssid = "myap";
+static char* password = "44448888";
+static char* destination_ip = "10.25.48.58";
+static int destination_port = 8888;
+
 // Macro for checking return codes of rcl functions
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -69,7 +76,8 @@ static void ros_msg_init()
 
 void ros_init()
 {
-    set_microros_transports();
+    // set_microros_transports(); // serial
+    set_microros_wifi_transports(ssid, password, destination_ip, destination_port); // wifi
 
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, HIGH); 

@@ -1,7 +1,5 @@
 #pragma once
 
-#define LED_PIN 2
-
 void error_loop();
 
 void ros_init();
