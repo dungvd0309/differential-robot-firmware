@@ -66,7 +66,7 @@ void setup()
 }
 
 void ros_task(void*) {
-  ros_init();
+  ros_init(); 
   for(;;){ ros_spin_some(); vTaskDelay(pdMS_TO_TICKS(1)); }
 }
 

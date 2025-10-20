@@ -81,10 +81,12 @@ static void ros_msg_init()
     pub_msg.velocity.data[1] = 0;
 }
 
-void ros_init()
-{
-    // set_microros_transports(); // serial
-    set_microros_wifi_transports(ssid, password, destination_ip, destination_port); // wifi
+void ros_init(bool wifi_mode = true)
+{   
+    if(wifi_mode)
+        set_microros_wifi_transports(ssid, password, destination_ip, destination_port); // wifi
+    else
+        set_microros_transports(); // serial
 
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, HIGH); 
