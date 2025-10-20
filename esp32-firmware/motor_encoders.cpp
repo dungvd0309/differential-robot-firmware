@@ -51,8 +51,12 @@ void MotorEncoders::updateVelocities()
 
     double dt_s = dt_ms / 1000.0; // ms sang s
     long left_delta = _left_count - _prev_left_count;
+    long right_delta = _right_count - _prev_right_count;
+
     _left_angular_velocity = (left_delta / _wheel_cpr) * 2 * PI / dt_s;   // rad/s
+    _right_angular_velocity = (right_delta / _wheel_cpr) * 2 * PI / dt_s; // rad/s
 
     _prev_left_count = _left_count;
+    _prev_right_count = _right_count;
     _prev_update_time = current_time;
 }

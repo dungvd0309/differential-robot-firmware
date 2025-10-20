@@ -50,6 +50,9 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 
         pub_msg.position.data[0] = encoders.getLeftAngle();
         pub_msg.velocity.data[0] = encoders.getLeftAngularVelocity();
+        pub_msg.position.data[1] = encoders.getRightAngle();
+        pub_msg.velocity.data[1] = encoders.getRightAngularVelocity();
+
         RCSOFTCHECK(rcl_publish(&publisher, &pub_msg, NULL));
         // msg.data++;
     }
@@ -58,20 +61,24 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 // Initialize ROS message function
 static void ros_msg_init()
 {
-    const char * joint_names[] = {"wheel_joint"};
+    const char * joint_names[] = {"left_wheel_joint", "right_wheel_joint"};
     sensor_msgs__msg__JointState__init(&pub_msg);
-    rosidl_runtime_c__String__Sequence__init(&pub_msg.name, 1);
+    rosidl_runtime_c__String__Sequence__init(&pub_msg.name, 2);
     rosidl_runtime_c__String__assign(&pub_msg.name.data[0], joint_names[0]);
+    rosidl_runtime_c__String__assign(&pub_msg.name.data[1], joint_names[1]);
 
-    pub_msg.position.data = (double*)malloc(sizeof(double) * 1);
-    pub_msg.position.size = 1;
-    pub_msg.position.capacity = 1;
+
+    pub_msg.position.data = (double*)malloc(sizeof(double) * 2);
+    pub_msg.position.size = 2;
+    pub_msg.position.capacity = 2;
     pub_msg.position.data[0] = 0;
+    pub_msg.position.data[1] = 0;
 
-    pub_msg.velocity.data = (double*)malloc(sizeof(double) * 1);
-    pub_msg.velocity.size = 1;
-    pub_msg.velocity.capacity = 1;
+    pub_msg.velocity.data = (double*)malloc(sizeof(double) * 2);
+    pub_msg.velocity.size = 2;
+    pub_msg.velocity.capacity = 2;
     pub_msg.velocity.data[0] = 0;
+    pub_msg.velocity.data[1] = 0;
 }
 
 void ros_init()

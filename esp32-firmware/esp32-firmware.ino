@@ -4,17 +4,19 @@
 #include "motor_controller.h"
 #include <PID_v1.h>
 
-
+// 32 33 25 26 27 14 
 // ===== KHAI BÁO CHÂN ===== //
-#define ENA 2
-#define IN1 4
-#define IN2 16
-#define IN3 25
-#define IN4 26
-#define ENB 27
+#define ENA 32
+#define IN1 33
+#define IN2 25
+#define IN3 26
+#define IN4 27
+#define ENB 14
 
-#define S1L 22
-#define S2L 23
+#define S1L 18
+#define S2L 5
+#define S1R 17
+#define S2R 16
 // ===== END ===== //
 
 // ===== KHAI BÁO HẰNG SỐ ===== //
@@ -31,13 +33,7 @@ const int WHEEL_DIAMETER = 65;       // đường kính bánh xe (mm)
 // ===== END ===== //
 
 MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
-MotorEncoders encoders(S1L, S2L, 255, 255, WHEEL_CPR); 
-
-
-
-
-
-
+MotorEncoders encoders(S1L, S2L, S1R, S2R, WHEEL_CPR); 
 
 double Setpoint = 0, Input = 0, Output = 0;
 double Kp = 2.0, Ki = 5.0, Kd = 1.0;
@@ -60,12 +56,13 @@ void setup()
   // ledcAttachChannel(ENA, freq, resolution, channel);
 
   // FreeRTOS
-  // xTaskCreatePinnedToCore(ros_task, "ros", 8192, NULL, 2, NULL, 0);
-  Serial.println("Angle(rad),Setpoint(rad),Output(PWM)");
-  inputString.reserve(50);
+  xTaskCreatePinnedToCore(ros_task, "ros", 8192, NULL, 2, NULL, 0);
+  
+  // Serial.println("Angle(rad),Setpoint(rad),Output(PWM)");
+  // inputString.reserve(50);
 
-  myPID.SetMode(AUTOMATIC);
-  myPID.SetOutputLimits(-255, 255);
+  // myPID.SetMode(AUTOMATIC);
+  // myPID.SetOutputLimits(-255, 255);
 }
 
 void ros_task(void*) {
@@ -75,29 +72,29 @@ void ros_task(void*) {
 
 void loop()
 {
-  // Đọc encoder
-  Input = encoders.getLeftAngle();
+  // // Đọc encoder
+  // Input = encoders.getLeftAngle();
 
-  // Tính PID
-  myPID.Compute();
+  // // Tính PID
+  // myPID.Compute();
 
-  // Gửi tín hiệu PWM
-  // controller.movePWM((int)Output,(int)Output);
-  digitalWrite(IN1, Output < 0 ? HIGH : LOW);
-  digitalWrite(IN2, Output < 0 ? LOW : HIGH);
-  ledcWrite(channel, abs((int)Output));
+  // // Gửi tín hiệu PWM
+  // // controller.movePWM((int)Output,(int)Output);
+  // digitalWrite(IN1, Output < 0 ? HIGH : LOW);
+  // digitalWrite(IN2, Output < 0 ? LOW : HIGH);
+  // ledcWrite(channel, abs((int)Output));
 
-  // Gửi dữ liệu cho Serial Plotter
-  Serial.print(Input, 2); Serial.print(",");
-  Serial.print(Setpoint, 2); Serial.print(",");
-  Serial.print(Output, 2); Serial.print(",");
-  Serial.println();
-  // Kiểm tra có dữ liệu Serial mới nhập
-  if (stringComplete) {
-    parseInput(inputString);
-    inputString = "";
-    stringComplete = false;
-  }
+  // // Gửi dữ liệu cho Serial Plotter
+  // Serial.print(Input, 2); Serial.print(",");
+  // Serial.print(Setpoint, 2); Serial.print(",");
+  // Serial.print(Output, 2); Serial.print(",");
+  // Serial.println();
+  // // Kiểm tra có dữ liệu Serial mới nhập
+  // if (stringComplete) {
+  //   parseInput(inputString);
+  //   inputString = "";
+  //   stringComplete = false;
+  // }
   delay(20);
 
   // vTaskDelay(pdMS_TO_TICKS(1000)); 
