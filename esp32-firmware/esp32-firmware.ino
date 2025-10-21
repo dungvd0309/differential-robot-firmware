@@ -6,12 +6,12 @@
 
 // 32 33 25 26 27 14 
 // ===== KHAI BÁO CHÂN ===== //
-#define ENA 32
-#define IN1 33
-#define IN2 25
-#define IN3 26
-#define IN4 27
-#define ENB 14
+#define ENA 14
+#define IN1 27
+#define IN2 26
+#define IN3 25
+#define IN4 33
+#define ENB 32
 
 #define S1L 18
 #define S2L 5
@@ -47,12 +47,12 @@ void setup()
   Serial.begin(115200); 
   encoders.init();
   controller.init();
-  controller.movePWM(255,255);
+  controller.movePWM(0,0);
 
   // Đặt tần số PWM cao để giảm tiếng động cơ
   // ledcDetachPin(ENA);
-  ledcSetup(channel, freq, resolution);  // thiết lập kênh PWM với tần số và độ phân giải
-  ledcAttachPin(ENA, channel);      // gán chân PWM cho kênh
+  // ledcSetup(channel, freq, resolution);  // thiết lập kênh PWM với tần số và độ phân giải
+  // ledcAttachPin(ENA, channel);      // gán chân PWM cho kênh
   // ledcAttachChannel(ENA, freq, resolution, channel);
 
   // FreeRTOS

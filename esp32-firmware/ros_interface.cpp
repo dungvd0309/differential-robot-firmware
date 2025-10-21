@@ -1,5 +1,6 @@
 #include "ros_interface.h"
 #include "motor_encoders.h"
+#include "motor_controller.h"
 
 #include <micro_ros_arduino.h>
 
@@ -12,16 +13,20 @@
 #include <std_msgs/msg/float32.h>
 #include <sensor_msgs/msg/joint_state.h>
 #include <rosidl_runtime_c/string_functions.h>
+#include <geometry_msgs/msg/twist.h>
 
 static rcl_publisher_t publisher; 
 static sensor_msgs__msg__JointState pub_msg;
+rcl_subscription_t subscriber;
+geometry_msgs__msg__Twist sub_msg;
 static rclc_executor_t executor;
 static rclc_support_t support;
 static rcl_allocator_t allocator;
 static rcl_node_t node;
 static rcl_timer_t timer;
 
-extern MotorEncoders encoders; // Use the global encoders object from the .ino file
+extern MotorController controller;
+extern MotorEncoders encoders; // Use the global objects from the .ino file
 
 static char* ssid = "myap";
 static char* password = "44448888";
@@ -41,6 +46,7 @@ void error_loop() {
     }
 }
 
+// publishing timer cb
 static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
@@ -58,7 +64,7 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
     }
 }
 
-// Initialize ROS message function
+// initialize ROS message 
 static void ros_msg_init()
 {
     const char * joint_names[] = {"left_wheel_joint", "right_wheel_joint"};
@@ -81,7 +87,23 @@ static void ros_msg_init()
     pub_msg.velocity.data[1] = 0;
 }
 
-void ros_init(bool wifi_mode = true)
+//twist message cb
+void subscription_callback(const void *msgin) {
+  const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
+  
+  if(msg->linear.x == 0 && msg->angular.z == 0) {
+    controller.movePWM(0, 0);
+  }
+  if(msg->angular.z != 0) {
+    controller.movePWM(int(255 * msg->angular.z * -1 ), int(255 * msg->angular.z));
+  } else if (msg->linear.x != 0){
+    controller.movePWM(int(255 * msg->linear.x) , int(255 * msg->linear.x));
+  }
+  
+  digitalWrite(LED_PIN, (msg->linear.x == 0) ? LOW : HIGH);
+}
+
+void ros_init(bool wifi_mode)
 {   
     if(wifi_mode)
         set_microros_wifi_transports(ssid, password, destination_ip, destination_port); // wifi
@@ -115,11 +137,20 @@ void ros_init(bool wifi_mode = true)
         &support,
         RCL_MS_TO_NS(timer_timeout),
         timer_callback));
+
+    // create subscriber
+    RCCHECK(rclc_subscription_init_default(
+        &subscriber,
+        &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
+        "/cmd_vel"));
     
     // create executor
-    RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
+    RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
     RCCHECK(rclc_executor_add_timer(&executor, &timer));
+    RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &sub_msg, &subscription_callback, ON_NEW_DATA));
 
+    // initialize ROS message
     ros_msg_init();
     digitalWrite(LED_PIN, LOW);
 }      
