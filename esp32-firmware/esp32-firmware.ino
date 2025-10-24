@@ -73,8 +73,8 @@ void ros_task(void*) {
 void loop()
 {
   // Đọc encoder
-  Input = encoders.getLeftAngle();
-  Setpoint = encoders.getRightAngle();
+  encoders.updateVelocities();
+  Input = encoders.getLeftRpm();
 
   // Tính PID
   myPID.Compute();
@@ -140,7 +140,7 @@ void parseInput(String s) {
   int n = sscanf(s.c_str(), "%f %f %f %f", &sp, &p, &i, &d);
   
   if (n == 4) {
-    // Setpoint = sp;
+    Setpoint = sp;
     Kp = p;
     Ki = i;
     Kd = d;
