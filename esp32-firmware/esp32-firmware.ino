@@ -13,10 +13,10 @@
 #define IN4 33
 #define ENB 32
 
-#define S1L 18
-#define S2L 5
-#define S1R 17
-#define S2R 16
+#define S1L 16
+#define S2L 17
+#define S1R 18
+#define S2R 5
 // ===== END ===== //
 
 // ===== KHAI BÁO HẰNG SỐ ===== //
@@ -29,11 +29,11 @@ const double GEAR_RATIO = 20.4 / 1; // hệ số bánh răng của động cơ
 const int DECODE_FACTOR = 1;        // hệ số giải mã xung A/B (x1, x2, x4), trong file motor_encoder đang là x1 (đếm RISING của S1)
 const int MOTOR_CPR = 11;           // số xung trên 1 vòng encoder (COUNTS_PER_REVOLUTION) 
 const double WHEEL_CPR = GEAR_RATIO * MOTOR_CPR * DECODE_FACTOR; // số xung trên 1 vòng trục (COUNTS_PER_REVOLUTION)
-const int WHEEL_DIAMETER = 65;       // đường kính bánh xe (mm)
+const double WHEEL_DIAMETER = 0.065;       // đường kính bánh xe (m)
 // ===== END ===== //
 
 MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
-MotorEncoders encoders(S1L, S2L, S1R, S2R, WHEEL_CPR); 
+MotorEncoders encoders(S1L, S2L, S1R, S2R, WHEEL_CPR, WHEEL_DIAMETER / 2); 
 
 double Setpoint = 0, Input = 0, Output = 0;
 double Kp = 2.0, Ki = 5.0, Kd = 1.0;
@@ -56,7 +56,7 @@ void setup()
   // ledcAttachChannel(ENA, freq, resolution, channel);
 
   // FreeRTOS
-  xTaskCreatePinnedToCore(ros_task, "ros", 8192, NULL, 2, NULL, 0);
+  // xTaskCreatePinnedToCore(ros_task, "ros", 8192, NULL, 2, NULL, 0);
   
   // Serial.println("Angle(rad),Setpoint(rad),Output(PWM)");
   // inputString.reserve(50);
@@ -100,14 +100,19 @@ void loop()
   // vTaskDelay(pdMS_TO_TICKS(1000)); 
 
   // FOR TESTING
-  
-  // Serial.print("count: ");
-  // Serial.print(encoders.getLeftCount());
-  // Serial.print(", pos: ");
-  // Serial.print(encoders.getLeftAngle());
-  // Serial.print(", vel: ");
-  // Serial.print(encoders.getLeftAngularVelocity());
-  // Serial.println();
+
+  encoders.updateVelocities();
+  Serial.print("count: ");
+  Serial.print(encoders.getLeftCount());
+  Serial.print("\t pos: ");
+  Serial.print(encoders.getLeftAngle());
+  Serial.print("\t rad/s: ");
+  Serial.print(encoders.getLeftAngularVelocity());
+  Serial.print("\t rpm: ");
+  Serial.print(encoders.getLeftRpm());
+  Serial.print("\t m/s: ");
+  Serial.print(encoders.getLeftLinearVelocity());
+  Serial.println();
 }
 
 void serialEvent() {

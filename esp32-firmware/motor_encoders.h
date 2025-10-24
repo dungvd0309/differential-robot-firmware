@@ -13,17 +13,18 @@ class MotorEncoders {
 
 
     // Cac bien dung cho tinh toan van toc
-    double _wheel_cpr;
-    long _prev_left_count = 0;      // Biến đếm xung của lần tính vận tốc trước
-    long _prev_right_count = 0;     // Biến đếm xung của lần tính vận tốc trước
-    unsigned long _prev_update_time = 0; // Thời điểm lần tính vận tốc trước
-    volatile double _left_angular_velocity = 0;  // rad/s
-    volatile double _right_angular_velocity = 0; // rad/s
+    double _wheel_radius;                  // Bán kính bánh xe
+    double _wheel_cpr;                     // Số xung encoder 1 vòng bánh xe
+    long _prev_left_count = 0;             // Biến đếm xung của lần tính vận tốc trước
+    long _prev_right_count = 0;            // Biến đếm xung của lần tính vận tốc trước
+    unsigned long _prev_update_time = 0;   // Thời điểm lần tính vận tốc trước
+    volatile double _left_count_rate = 0;  // count/s
+    volatile double _right_count_rate = 0; // count/s
     
   public:
     MotorEncoders(uint8_t s1l = 255, uint8_t s2l = 255, uint8_t s1r = 255, uint8_t s2r = 255
-                , double wheel_cpr = 11);
-
+                , double wheel_cpr = 11, double wheel_radius = 0.065);
+      
     // Hàm khai báo các chân encoder
     void init();
 
@@ -38,11 +39,22 @@ class MotorEncoders {
     // Hàm getter hanh trinh dong co
     long getLeftCount() const { return _left_count; }
     long getRightCount() const { return _right_count; }
-    double getLeftAngle() const { return (double)_left_count / _wheel_cpr * 2 * PI; } // rad
-    double getRightAngle() const { return (double)_right_count / _wheel_cpr * 2 * PI; } // rad
+    double getLeftAngleRad() const { return (double)_left_count / _wheel_cpr * 2 * PI; } // rad
+    double getRightAngleRad() const { return (double)_right_count / _wheel_cpr * 2 * PI; } // rad
+    double getLeftAngle() const { return getLeftAngleRad() * 180 / PI; } // deg
+    double getRightAngle() const { return getRightAngleRad() * 180 / PI; } // deg
+
 
     // Ham getter van toc dong co
     void updateVelocities();
-    double getLeftAngularVelocity() const { return _left_angular_velocity; } // rad/s
-    double getRightAngularVelocity() const { return _right_angular_velocity; } // rad/s
+
+    double getLeftAngularVelocity() const { return _left_count_rate / _wheel_cpr * 2 * PI; } // rad/s
+    double getRightAngularVelocity() const { return _right_count_rate / _wheel_cpr * 2 * PI; } // rad/s
+
+    double getLeftLinearVelocity() const { return getLeftAngularVelocity() * _wheel_radius; } // m/s
+    double getRightLinearVelocity() const { return getRightAngularVelocity() * _wheel_radius; } // m/s
+
+    double getLeftRpm() const { return _left_count_rate / _wheel_cpr * 60; } // rpm
+    double getRightRpm() const { return _right_count_rate / _wheel_cpr * 60; } // rpm
+
 };
