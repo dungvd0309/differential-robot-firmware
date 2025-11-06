@@ -1,8 +1,12 @@
 //Note: esp32 library v2.0.2
+#include <stdio.h>
 #include "ros_interface.h"
 #include "motor_encoders.h"
 #include "motor_controller.h"
+#include "robot_config.h"
 #include <PID_v1.h>
+
+CONFIG cfg;
 
 // 32 33 25 26 27 14 
 // ===== KHAI BÁO CHÂN ===== //
@@ -20,21 +24,11 @@
 // ===== END ===== //
 
 // ===== KHAI BÁO HẰNG SỐ ===== //
-const int freq = 20000;    // tần số PWM 20 kHz
 const int channel = 0;     // kênh PWM (0-15)
-const int resolution = 8;  // độ phân giải bit (8 bit cho giá trị từ 0-255)
-
-const int MIN_PWM = 135;             // Giá trị PWM tối thiểu để động cơ bắt đầu quay
-// ref: JGA25-370 280RPM 
-const double GEAR_RATIO = 20.4 / 1; // hệ số bánh răng của động cơ
-const int DECODE_FACTOR = 1;        // hệ số giải mã xung A/B (x1, x2, x4), trong file motor_encoder đang là x1 (đếm RISING của S1)
-const int MOTOR_CPR = 11;           // số xung trên 1 vòng encoder (COUNTS_PER_REVOLUTION) 
-const double WHEEL_CPR = GEAR_RATIO * MOTOR_CPR * DECODE_FACTOR; // số xung trên 1 vòng trục (COUNTS_PER_REVOLUTION)
-const double WHEEL_DIAMETER = 0.065;       // đường kính bánh xe (m)
 // ===== END ===== //
 
 MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
-MotorEncoders encoders(S1L, S2L, S1R, S2R, WHEEL_CPR, WHEEL_DIAMETER / 2); 
+MotorEncoders encoders(cfg.mot_left_enc_gpio_a_fg, cfg.mot_left_enc_gpio_b, cfg.mot_right_enc_gpio_a_fg, cfg.mot_right_enc_gpio_b, cfg.WHEEL_CPR, cfg.WHEEL_RADIUS); 
 
 double Setpoint = 0, Input = 0, Output = 0;
 double Kp = 0.6, Ki = 1.0, Kd = 0.0;
@@ -52,7 +46,7 @@ void setup()
 
   // Đặt tần số PWM cao để giảm tiếng động cơ
   ledcDetachPin(ENA);
-  ledcSetup(channel, freq, resolution);  // thiết lập kênh PWM với tần số và độ phân giải
+  ledcSetup(channel, cfg.PWM_FREQUENCY, cfg.PWM_RESOLUTION);  // thiết lập kênh PWM với tần số và độ phân giải
   ledcAttachPin(ENA, channel);      // gán chân PWM cho kênh
 
   // FreeRTOS
@@ -76,9 +70,6 @@ void loop()
   encoders.updateVelocities();
   Input = encoders.getLeftRpm();
 
-  
-
-  
   if (abs(Setpoint - Input) > 20) {
     myPID.SetTunings(Kp, Ki, Kd);
   } else {
@@ -93,7 +84,7 @@ void loop()
   }
 
   // Ánh xạ lại giá trị Output để loại bỏ vùng chết của động cơ
-  int motorPWM = (Output == 0) ? 0 : map(abs(Output), 0, 255, MIN_PWM, 255);
+  int motorPWM = (Output == 0) ? 0 : map(abs(Output), 0, 255, cfg.motor_driver_min_pwm, 255);
 
   // Gửi tín hiệu PWM
   // controller.movePWM((int)Output,(int)Output);

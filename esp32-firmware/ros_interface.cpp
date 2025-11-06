@@ -1,6 +1,7 @@
 #include "ros_interface.h"
 #include "motor_encoders.h"
 #include "motor_controller.h"
+#include "robot_config.h"
 
 #include <micro_ros_arduino.h>
 
@@ -28,10 +29,7 @@ static rcl_timer_t timer;
 extern MotorController controller;
 extern MotorEncoders encoders; // Use the global objects from the .ino file
 
-static char* ssid = "dungvd";
-static char* password = "44448888";
-static char* destination_ip = "10.42.0.1";
-static int destination_port = 8888;
+extern CONFIG cfg;
 
 #define LED_PIN 2
 
@@ -106,7 +104,7 @@ void subscription_callback(const void *msgin) {
 void ros_init(bool wifi_mode)
 {   
     if(wifi_mode)
-        set_microros_wifi_transports(ssid, password, destination_ip, destination_port); // wifi
+        set_microros_wifi_transports(cfg.SSID, cfg.PASSWORD, cfg.DESTINATION_IP, cfg.DESTINATION_PORT); // wifi
     else
         set_microros_transports(); // serial
 
