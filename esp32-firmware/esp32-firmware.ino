@@ -37,7 +37,7 @@ MotorController controller(ENA, IN1, IN2, IN3, IN4, ENB);
 MotorEncoders encoders(S1L, S2L, S1R, S2R, WHEEL_CPR, WHEEL_DIAMETER / 2); 
 
 double Setpoint = 0, Input = 0, Output = 0;
-double Kp = 1.2, Ki = 0.0, Kd = 0.1;
+double Kp = 0.6, Ki = 1.0, Kd = 0.0;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 String inputString = "";    // Biến lưu chuỗi serial nhận
@@ -76,8 +76,21 @@ void loop()
   encoders.updateVelocities();
   Input = encoders.getLeftRpm();
 
+  
+
+  
+  if (abs(Setpoint - Input) > 20) {
+    myPID.SetTunings(Kp, Ki, Kd);
+  } else {
+    myPID.SetTunings(Kp, Ki, 0);
+  }
+
   // Tính PID
   myPID.Compute();
+
+  if(abs(Setpoint) < 15) {
+    Output = 0;
+  }
 
   // Ánh xạ lại giá trị Output để loại bỏ vùng chết của động cơ
   int motorPWM = (Output == 0) ? 0 : map(abs(Output), 0, 255, MIN_PWM, 255);
@@ -89,9 +102,10 @@ void loop()
   ledcWrite(channel, motorPWM);
 
   // Gửi dữ liệu cho Serial Plotter
-  Serial.print(Input, 2); Serial.print(",");
-  Serial.print(Setpoint, 2); Serial.print(",");
-  Serial.print(Output, 2); Serial.print(",");
+  Serial.print("0:0 ");
+  Serial.print("Input:"); Serial.print(Input, 2); Serial.print(" ");
+  Serial.print("Setpoint:"); Serial.print(Setpoint, 2); Serial.print(" ");
+  Serial.print("Output:"); Serial.print(Output, 2); Serial.print(" ");
   Serial.println();
   // Kiểm tra có dữ liệu Serial mới nhập
   if (stringComplete) {
