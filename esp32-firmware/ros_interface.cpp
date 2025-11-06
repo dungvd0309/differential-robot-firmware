@@ -28,9 +28,9 @@ static rcl_timer_t timer;
 extern MotorController controller;
 extern MotorEncoders encoders; // Use the global objects from the .ino file
 
-static char* ssid = "myap";
+static char* ssid = "dungvd";
 static char* password = "44448888";
-static char* destination_ip = "10.25.48.58";
+static char* destination_ip = "10.42.0.1";
 static int destination_port = 8888;
 
 #define LED_PIN 2
@@ -131,7 +131,7 @@ void ros_init(bool wifi_mode)
         "wheel_pose"));
     
     // create timer
-    const unsigned int timer_timeout = 4; // 250hz
+    const unsigned int timer_timeout = 10; // 50hz
     RCCHECK(rclc_timer_init_default(
         &timer,
         &support,
@@ -157,5 +157,5 @@ void ros_init(bool wifi_mode)
 
 void ros_spin_some(int delay)
 {
-    RCCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(delay)));
+    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(delay));
 }
