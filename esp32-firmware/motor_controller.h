@@ -19,8 +19,11 @@ class MotorController {
     SetPWMCallback pwm_callback; 
     
     float encoderPPR;
+    float ticksPerMicroSecToRPM;
 
+    unsigned int updatePeriodUs;
     long int encPrev;
+    unsigned long tickSampleTimePrev;
 
   public:
     MotorController();
@@ -34,7 +37,9 @@ class MotorController {
     void setPIDki(float ki);
     void setPIDkd(float kd);
     bool setTargetRPM(float rpm);
+    float getCurrentRPM();
     float getTargetRPM();
+    float getCurrentPWM();
     long int getEncoderValue() const;
 
   public:

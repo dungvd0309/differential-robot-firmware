@@ -25,22 +25,23 @@ void setMotorPWM(MotorController * motor, float pwm) {
 
   int max_pwm = cfg.motor_driver_max_pwm;
   // int min_pwm = cfg.motor_driver_min_pwm;
+  int pwm_magnitude = round(abs(pwm) * max_pwm);
 
   if (pwm == 0) {
     digitalWrite(in1_pin, HIGH);
     digitalWrite(in2_pin, HIGH);
+    return;
   }
   else if (pwm > 0) {
-    digitalWrite(in1_pin, HIGH);
-    digitalWrite(in2_pin, LOW);
-  }
-  else {
     digitalWrite(in1_pin, LOW);
     digitalWrite(in2_pin, HIGH);
   }
+  else {
+    digitalWrite(in1_pin, HIGH);
+    digitalWrite(in2_pin, LOW);
+  }
   ledcAttachPin(pwm_pin, pwm_channel);
-  ledcWrite(pwm_channel, abs(pwm));
-
+  ledcWrite(pwm_channel, pwm_magnitude);
 }
 
 void setupEncoders() {

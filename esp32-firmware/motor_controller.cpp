@@ -18,6 +18,12 @@ MotorController::MotorController() :
 void MotorController::init(float encoderPPR, float kp, float ki, float kd, float maxRPM) {
     this->encoderPPR = encoderPPR;
     this->maxRPM = maxRPM;
+    this->ticksPerMicroSecToRPM = 1e6 * 60.0 / this->encoderPPR;
+    tickSampleTimePrev = 0;
+
+    float pidPeriod = 0.03;
+    updatePeriodUs = (unsigned int) round(pidPeriod * 1e6);
+
     setPIDConfig(kp, ki, kd);
     pid.SetMode(AUTOMATIC);
     pid.SetOutputLimits(-1, 1);
@@ -31,10 +37,6 @@ void MotorController::setPWM(float pwm) {
   if (pwm_callback) {
     pwm_callback(this, pwm);
   }
-}
-
-void MotorController::update() {
-    // pid.Compute();
 }
 
 void MotorController::resetEncoder() {
@@ -73,6 +75,14 @@ bool MotorController::setTargetRPM(float rpm) {
     return within_limit;
 }
 
+float MotorController::getCurrentPWM() {
+    return pidPWM;
+}
+
+float MotorController::getCurrentRPM() {
+    return measuredRPM;
+}
+
 float MotorController::getTargetRPM() {
     return targetRPM;
 }
@@ -81,3 +91,20 @@ long int MotorController::getEncoderValue() const {
     return encoder;
 }
 
+void MotorController::update() {
+    unsigned long tickTime = micros();
+    unsigned long tickTimeDelta = tickTime - tickSampleTimePrev;
+    if(tickTimeDelta < updatePeriodUs)
+        return;
+    tickSampleTimePrev = tickTime;
+
+    long int encNow = getEncoderValue();
+    long int encDelta = encNow - encPrev;
+    encPrev = encNow;
+
+    float ticksPerMicroSec = ((float) encDelta) / ((float) tickTimeDelta);
+    measuredRPM = ticksPerMicroSec * ticksPerMicroSecToRPM;
+    
+    pid.Compute();
+    setPWM(pidPWM);
+}
