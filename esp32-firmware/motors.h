@@ -30,7 +30,6 @@ void setMotorPWM(MotorController * motor, float pwm) {
   if (pwm == 0) {
     digitalWrite(in1_pin, HIGH);
     digitalWrite(in2_pin, HIGH);
-    return;
   }
   else if (pwm > 0) {
     digitalWrite(in1_pin, LOW);
@@ -72,7 +71,7 @@ void setupMotors() {
   leftMotor.setPWMCallback(setMotorPWM);
   rightMotor.setPWMCallback(setMotorPWM);
 
-  leftMotor.init(cfg.WHEEL_CPR, cfg.motor_driver_pid_kp, cfg.motor_driver_pid_ki, cfg.motor_driver_pid_kd, cfg.motor_driver_max_pwm);
-  rightMotor.init(cfg.WHEEL_CPR, cfg.motor_driver_pid_kp, cfg.motor_driver_pid_ki, cfg.motor_driver_pid_kd, cfg.motor_driver_max_pwm);
+  leftMotor.init(cfg.WHEEL_CPR, cfg.motor_driver_pid_kp, cfg.motor_driver_pid_ki, cfg.motor_driver_pid_kd, cfg.motor_max_rpm);
+  rightMotor.init(cfg.WHEEL_CPR, cfg.motor_driver_pid_kp, cfg.motor_driver_pid_ki, cfg.motor_driver_pid_kd, cfg.motor_max_rpm);
   
 }

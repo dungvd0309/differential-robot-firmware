@@ -5,7 +5,6 @@
 #include "motor_encoders.h"
 #include "motor_controller.h"
 #include "robot_config.h"
-#include <PID_v1.h>
 
 CONFIG cfg;
 
@@ -35,22 +34,14 @@ void loop()
   // rightMotor.update();
   Serial.print(leftMotor.getEncoderValue());
   Serial.print(' ');
-  Serial.println(leftMotor.getCurrentRPM());
-  
-
-  // if (abs(Setpoint - Input) > 20) {
-  //   myPID.SetTunings(Kp, Ki, Kd);
-  // } else {
-  //   myPID.SetTunings(Kp, Ki, 0);
-  // }
-
-
-  // if(abs(Setpoint) < 15) {
-  //   Output = 0;
-  // }
-
-  // // Ánh xạ lại giá trị Output để loại bỏ vùng chết của động cơ
-  // int motorPWM = (Output == 0) ? 0 : map(abs(Output), 0, 255, cfg.motor_driver_min_pwm, 255);
+  Serial.print(leftMotor.getCurrentRPM());
+  Serial.print("| ");
+  Serial.print("Kp = ");
+  Serial.print(leftMotor.getPIDKp(), 5);
+  Serial.print(" Ki = ");
+  Serial.print(leftMotor.getPIDKi(), 5);
+  Serial.print(" Kd = ");
+  Serial.println(leftMotor.getPIDKd(), 5);
 
 
   // // Gửi dữ liệu cho Serial Plotter
@@ -71,20 +62,6 @@ void loop()
   
 }
 
-void serialEvent() {
-  while (Serial.available()) {
-    char inChar = (char)Serial.read();
-    
-    // Nếu kết thúc dòng
-    if (inChar == '\n') {
-      stringComplete = true;
-    }
-    else {
-      inputString += inChar;
-    }
-  }
-}
-
 // Hàm phân tích chuỗi serial dạng "<setpoint> <kp> <ki> <kd>"
 void parseInput(String s) {
   // Tách chuỗi thành các phần tử
@@ -98,7 +75,7 @@ void parseInput(String s) {
     float Kd = d;
 
     leftMotor.setTargetRPM(Setpoint);
-    // leftMotor.setPIDConfig(Kp, Ki, Kd);
+    leftMotor.setPIDConfig(Kp, Ki, Kd);
 
 
     Serial.print("Updated - Setpoint: ");

@@ -1,6 +1,6 @@
 #pragma once
 #include "esp32-hal-gpio.h"
-#include <PID_v1.h>
+#include <PID_Timed.h>
 
 class MotorController {
   public:
@@ -26,7 +26,7 @@ class MotorController {
     unsigned long tickSampleTimePrev;
 
   public:
-    MotorController();
+    // MotorController();
     void init(float encoderPPR, float kp, float ki, float kd, float maxRPM);
     void setPWMCallback(SetPWMCallback callback);
     void setPWM(float pwm);
@@ -40,6 +40,9 @@ class MotorController {
     float getCurrentRPM();
     float getTargetRPM();
     float getCurrentPWM();
+    float getPIDKp();
+    float getPIDKi();
+    float getPIDKd();
     long int getEncoderValue() const;
 
   public:

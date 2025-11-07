@@ -21,10 +21,11 @@ public:
     static constexpr int DESTINATION_PORT = 8888;
 
 public:
+    float motor_max_rpm = 200;
     int motor_driver_max_pwm = 255;
     int motor_driver_min_pwm = 135;
-    float motor_driver_pid_kp = 0.001f;
-    float motor_driver_pid_ki = 0.003f;
+    float motor_driver_pid_kp = 0.002f;
+    float motor_driver_pid_ki = 0.0015f;
     float motor_driver_pid_kd = 0;
 
     // motor driver pins 
