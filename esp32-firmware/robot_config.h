@@ -27,17 +27,22 @@ public:
     float motor_driver_pid_ki = 0.003f;
     float motor_driver_pid_kd = 0;
 
-    // motor driver pins 32 33 25 26 27 14 
-    uint8_t mot_left_drv_gpio_pwm = 32;
-    uint8_t mot_left_drv_gpio_in1 = 33;
-    uint8_t mot_left_drv_gpio_in2 = 25;
-    uint8_t mot_right_drv_gpio_pwm = 14;
-    uint8_t mot_right_drv_gpio_in1 = 25;
-    uint8_t mot_right_drv_gpio_in2 = 33;
+    // motor driver pins 
+    // 32 33 25 26 27 14 ENB -> ENA
+    uint8_t mot_left_drv_gpio_pwm = 14; // ENA
+    uint8_t mot_left_drv_gpio_in1 = 27; // IN1
+    uint8_t mot_left_drv_gpio_in2 = 26; // IN2
+    uint8_t mot_right_drv_gpio_pwm = 32;// ENB
+    uint8_t mot_right_drv_gpio_in1 = 25;// IN3
+    uint8_t mot_right_drv_gpio_in2 = 33;// IN4
 
     // encoder pins
-    uint8_t mot_left_enc_gpio_a_fg = 255;
-    uint8_t mot_left_enc_gpio_b = 255;
-    uint8_t mot_right_enc_gpio_a_fg = 255;
-    uint8_t mot_right_enc_gpio_b = 255;
+    uint8_t mot_left_enc_gpio_a_fg = 16;
+    uint8_t mot_left_enc_gpio_b = 17;
+    uint8_t mot_right_enc_gpio_a_fg = 18;
+    uint8_t mot_right_enc_gpio_b = 5;
+
+    uint8_t MOT_PWM_LEFT_CHANNEL = 0;
+    uint8_t MOT_PWM_RIGHT_CHANNEL = 1;
+
 };

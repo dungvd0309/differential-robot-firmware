@@ -89,14 +89,14 @@ static void ros_msg_init()
 void subscription_callback(const void *msgin) {
   const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
   
-  if(msg->linear.x == 0 && msg->angular.z == 0) {
-    controller.movePWM(0, 0);
-  }
-  if(msg->angular.z != 0) {
-    controller.movePWM(int(255 * msg->angular.z * -1 ), int(255 * msg->angular.z));
-  } else if (msg->linear.x != 0){
-    controller.movePWM(int(255 * msg->linear.x) , int(255 * msg->linear.x));
-  }
+//   if(msg->linear.x == 0 && msg->angular.z == 0) {
+//     controller.movePWM(0, 0);
+//   }
+//   if(msg->angular.z != 0) {
+//     controller.movePWM(int(255 * msg->angular.z * -1 ), int(255 * msg->angular.z));
+//   } else if (msg->linear.x != 0){
+//     controller.movePWM(int(255 * msg->linear.x) , int(255 * msg->linear.x));
+//   }
   
   digitalWrite(LED_PIN, (msg->linear.x == 0) ? LOW : HIGH);
 }

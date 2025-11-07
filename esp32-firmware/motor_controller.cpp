@@ -1,48 +1,83 @@
+#include "PID_v1.h"
 #include <Arduino.h>
 #include "motor_controller.h"
 
-MotorController::MotorController(uint8_t enL, uint8_t in1, uint8_t in2, uint8_t in3, uint8_t in4, uint8_t enR)
+MotorController::MotorController() :
+    encoder(0),
+    pid(&measuredRPM, &pidPWM, &targetRPM, 0, 0, 0, DIRECT),
+    kp(0), ki(0), kd(0),
+    pidPWM(0),
+    targetRPM(0),
+    measuredRPM(0),
+    maxRPM(0),
+    encoderPPR(0),
+    encPrev(0)
 {
-    _enL = enL;
-    _in1 = in1;
-    _in2 = in2;
-    _in3 = in3;
-    _in4 = in4;
-    _enR = enR;
 }
 
-void MotorController::init()
-{
-    pinMode(_in1, OUTPUT);
-    pinMode(_in2, OUTPUT);
-    pinMode(_in3, OUTPUT);
-    pinMode(_in4, OUTPUT);
-
-    digitalWrite(_in1, LOW);
-    digitalWrite(_in2, LOW);
-    digitalWrite(_in3, LOW);
-    digitalWrite(_in4, LOW);
+void MotorController::init(float encoderPPR, float kp, float ki, float kd, float maxRPM) {
+    this->encoderPPR = encoderPPR;
+    this->maxRPM = maxRPM;
+    setPIDConfig(kp, ki, kd);
+    pid.SetMode(AUTOMATIC);
+    pid.SetOutputLimits(-1, 1);
 }
 
-void MotorController::movePWM(int leftPWM, int rightPWM)
-{
-    digitalWrite(_in1, leftPWM < 0 ? HIGH : LOW);
-    digitalWrite(_in2, leftPWM < 0 ? LOW : HIGH);
-    digitalWrite(_in3, rightPWM < 0 ? HIGH : LOW);
-    digitalWrite(_in4, rightPWM < 0 ? LOW : HIGH);
-    analogWrite(_enL, abs(leftPWM));
-    analogWrite(_enR, abs(rightPWM));
+void MotorController::setPWMCallback(SetPWMCallback set_pwm_callback) {
+  this->pwm_callback = set_pwm_callback;
 }
 
-void MotorController::movePWM(int leftPWM, int rightPWM, int minPWM)
-{
-    // Loại bỏ xung khiến động cơ không chạy được
-    int realLeftPWM = (leftPWM == 0) ? 0 : map(abs(leftPWM), 0, 255, minPWM, 255);
-    int realRightPWM = (rightPWM == 0) ? 0 : map(abs(rightPWM), 0, 255, minPWM, 255);
-    digitalWrite(_in1, leftPWM < 0 ? HIGH : LOW);
-    digitalWrite(_in2, leftPWM < 0 ? LOW : HIGH);
-    digitalWrite(_in3, rightPWM < 0 ? HIGH : LOW);
-    digitalWrite(_in4, rightPWM < 0 ? LOW : HIGH);
-    analogWrite(_enL, realLeftPWM);
-    analogWrite(_enR, realRightPWM);
+void MotorController::setPWM(float pwm) {
+  if (pwm_callback) {
+    pwm_callback(this, pwm);
+  }
 }
+
+void MotorController::update() {
+    // pid.Compute();
+}
+
+void MotorController::resetEncoder() {
+    encoder = 0;
+}
+
+void MotorController::setPIDConfig(float kp, float ki, float kd) {
+    this->kp = kp; this->ki = ki; this->kd = kd;
+    pid.SetTunings(kp, ki, kd);
+}
+
+void MotorController::setPIDkp(float kp) {
+    this->kp = kp;
+    pid.SetTunings(this->kp, this->ki, this->kd);
+}
+
+void MotorController::setPIDki(float ki) {
+    this->ki = ki;
+    pid.SetTunings(this->kp, this->ki, this->kd);
+}
+
+void MotorController::setPIDkd(float kd) {
+    this->kd = kd;
+    pid.SetTunings(this->kp, this->ki, this->kd);
+}
+
+
+bool MotorController::setTargetRPM(float rpm) {
+    if (targetRPM == rpm)
+    return false;
+
+    bool within_limit = (abs(rpm) <= maxRPM);
+    rpm = within_limit ? rpm : (rpm >= 0 ? maxRPM : -maxRPM);
+
+    targetRPM = rpm;
+    return within_limit;
+}
+
+float MotorController::getTargetRPM() {
+    return targetRPM;
+}
+
+long int MotorController::getEncoderValue() const {
+    return encoder;
+}
+

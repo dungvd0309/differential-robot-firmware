@@ -1,19 +1,49 @@
 #pragma once
 #include "esp32-hal-gpio.h"
+#include <PID_v1.h>
 
 class MotorController {
+  public:
+    typedef void (*SetPWMCallback)(MotorController*, float);
+    
 
-  private: 
-    uint8_t _enL, _in1, _in2, _in3, _in4, _enR; // Các chân điều khiển động cơ của L298N
+  protected: 
+    volatile long int encoder;
+    
+    PID pid;
+    float kp, ki, kd;
+    double pidPWM; // pid output (-1 to 1)
+    double targetRPM; // pid target
+    double measuredRPM; // pid input
+    float maxRPM;
+    SetPWMCallback pwm_callback; 
+    
+    float encoderPPR;
+
+    long int encPrev;
 
   public:
-    MotorController(uint8_t enL, uint8_t in1, uint8_t in2, uint8_t in3, uint8_t in4, uint8_t enR);
-    
-    // Phương thức khai báo các chân động cơ
-    void init();
+    MotorController();
+    void init(float encoderPPR, float kp, float ki, float kd, float maxRPM);
+    void setPWMCallback(SetPWMCallback callback);
+    void setPWM(float pwm);
+    void update();
+    void resetEncoder();
+    void setPIDConfig(float kp, float ki, float kd);
+    void setPIDkp(float kp);
+    void setPIDki(float ki);
+    void setPIDkd(float kd);
+    bool setTargetRPM(float rpm);
+    float getTargetRPM();
+    long int getEncoderValue() const;
 
-    // Các phương thức di chuyển
-    void movePWM(int leftPWM, int rightPWM);
-    void movePWM(int leftPWM, int rightPWM, int minPWM);
+  public:
+    void tickEncoder(bool increment) {
+      if (increment) {
+        encoder++;
+      } else {
+        encoder--;
+      }
+    }
     
-};
+};  
