@@ -24,6 +24,7 @@ class MotorController {
     unsigned int updatePeriodUs;
     long int encPrev;
     unsigned long tickSampleTimePrev;
+    bool setPointHasChanged;
 
   public:
     // MotorController();

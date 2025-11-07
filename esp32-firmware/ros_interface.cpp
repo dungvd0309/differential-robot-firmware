@@ -1,5 +1,4 @@
 #include "ros_interface.h"
-#include "motor_encoders.h"
 #include "motor_controller.h"
 #include "robot_config.h"
 
@@ -26,8 +25,7 @@ static rcl_allocator_t allocator;
 static rcl_node_t node;
 static rcl_timer_t timer;
 
-extern MotorController controller;
-extern MotorEncoders encoders; // Use the global objects from the .ino file
+extern MotorController leftMotor, rightMotor;
 
 extern CONFIG cfg;
 
@@ -49,16 +47,17 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        // Update values directly before publishing
-        encoders.updateVelocities();
-
-        pub_msg.position.data[0] = encoders.getLeftAngle();
-        pub_msg.velocity.data[0] = encoders.getLeftAngularVelocity();
-        pub_msg.position.data[1] = encoders.getRightAngle();
-        pub_msg.velocity.data[1] = encoders.getRightAngularVelocity();
+        // pub_msg.position.data[0] = encoders.getLeftAngle();
+        // pub_msg.velocity.data[0] = encoders.getLeftAngularVelocity();
+        // pub_msg.position.data[1] = encoders.getRightAngle();
+        // pub_msg.velocity.data[1] = encoders.getRightAngularVelocity();
+        
+        // pub_msg.position.data[0] = 0;
+        pub_msg.velocity.data[0] = cfg.rpm_to_speed(leftMotor.getCurrentRPM());
+        // pub_msg.position.data[1] = 0;
+        pub_msg.velocity.data[1] = cfg.rpm_to_speed(rightMotor.getCurrentRPM());
 
         RCSOFTCHECK(rcl_publish(&publisher, &pub_msg, NULL));
-        // msg.data++;
     }
 }
 
@@ -72,11 +71,11 @@ static void ros_msg_init()
     rosidl_runtime_c__String__assign(&pub_msg.name.data[1], joint_names[1]);
 
 
-    pub_msg.position.data = (double*)malloc(sizeof(double) * 2);
-    pub_msg.position.size = 2;
-    pub_msg.position.capacity = 2;
-    pub_msg.position.data[0] = 0;
-    pub_msg.position.data[1] = 0;
+    // pub_msg.position.data = (double*)malloc(sizeof(double) * 2);
+    // pub_msg.position.size = 2;
+    // pub_msg.position.capacity = 2;
+    // pub_msg.position.data[0] = 0;
+    // pub_msg.position.data[1] = 0;
 
     pub_msg.velocity.data = (double*)malloc(sizeof(double) * 2);
     pub_msg.velocity.size = 2;
@@ -87,18 +86,30 @@ static void ros_msg_init()
 
 //twist message cb
 void subscription_callback(const void *msgin) {
-  const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
-  
-//   if(msg->linear.x == 0 && msg->angular.z == 0) {
-//     controller.movePWM(0, 0);
-//   }
-//   if(msg->angular.z != 0) {
-//     controller.movePWM(int(255 * msg->angular.z * -1 ), int(255 * msg->angular.z));
-//   } else if (msg->linear.x != 0){
-//     controller.movePWM(int(255 * msg->linear.x) , int(255 * msg->linear.x));
-//   }
-  
-  digitalWrite(LED_PIN, (msg->linear.x == 0) ? LOW : HIGH);
+    const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
+
+    float target_speed_lin_x = msg->linear.x;
+    float target_speed_ang_z = msg->angular.z;
+    Serial.print("linear.x ");
+    Serial.print(msg->linear.x);
+    Serial.print(", angular.z ");
+    Serial.println(msg->angular.z);
+
+    float twist_target_speed_right = 0;
+    float twist_target_speed_left = 0;
+
+    Serial.print("twist_target_speed_right ");
+    Serial.print(twist_target_speed_right);
+    Serial.print(", twist_target_speed_left ");
+    Serial.println(twist_target_speed_left);
+
+    cfg.twistToWheelSpeeds(target_speed_lin_x, target_speed_ang_z,
+    &twist_target_speed_right, &twist_target_speed_left);
+    float twist_target_rpm_right = cfg.speed_to_rpm(twist_target_speed_right);
+    float twist_target_rpm_left = cfg.speed_to_rpm(twist_target_speed_left);
+
+    leftMotor.setTargetRPM(twist_target_rpm_left);
+    rightMotor.setTargetRPM(twist_target_rpm_right);
 }
 
 void ros_init(bool wifi_mode)

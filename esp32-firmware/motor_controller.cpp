@@ -65,6 +65,7 @@ bool MotorController::setTargetRPM(float rpm) {
     rpm = within_limit ? rpm : (rpm >= 0 ? maxRPM : -maxRPM);
 
     targetRPM = rpm;
+    setPointHasChanged = true;
     return within_limit;
 }
 
@@ -99,7 +100,7 @@ float MotorController::getPIDKd() {
 void MotorController::update() {
     unsigned long tickTime = micros();
     unsigned long tickTimeDelta = tickTime - tickSampleTimePrev;
-    if(tickTimeDelta < updatePeriodUs)
+    if((tickTimeDelta < updatePeriodUs) && !setPointHasChanged)
         return;
     tickSampleTimePrev = tickTime;
 
@@ -109,6 +110,8 @@ void MotorController::update() {
 
     float ticksPerMicroSec = ((float) encDelta) / ((float) tickTimeDelta);
     measuredRPM = ticksPerMicroSec * ticksPerMicroSecToRPM;
+
+    setPointHasChanged = false;
     
     if (targetRPM == 0 && measuredRPM == 0) {
       // Prevent wheels from twitching or slowly turning after stop

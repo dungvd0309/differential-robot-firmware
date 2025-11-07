@@ -4,7 +4,7 @@ class CONFIG
 {
 public:
     static constexpr float WHEEL_DIAMETER = 0.065;             // m
-    static constexpr float WHEEL_RADIUS = WHEEL_DIAMETER / 2;  // m
+    static constexpr float WHEEL_RADIUS = WHEEL_DIAMETER * 0.5;  // m
     // static constexpr float WHEEL_SEPARATION = 0.13;            // m
     static constexpr float GEAR_RATIO = 20.4; 
     static constexpr int ENCODER_CPR = 11;  // số xung trên 1 vòng encoder (COUNTS_PER_REVOLUTION) 
@@ -13,6 +13,10 @@ public:
     
     static constexpr int PWM_FREQUENCY = 20000; // Hz
     static constexpr uint8_t PWM_RESOLUTION = 8; // Bits
+
+    float base_wheel_track = 0.213f; // khoang cach giua 2 banh xe
+    float wheel_perim_len_div60 = PI * WHEEL_DIAMETER / 60;
+    float wheel_perim_len_div60_recip = 1/wheel_perim_len_div60;
 
 public:
     static constexpr char * SSID = "dungvd";
@@ -45,5 +49,21 @@ public:
 
     uint8_t MOT_PWM_LEFT_CHANNEL = 0;
     uint8_t MOT_PWM_RIGHT_CHANNEL = 1;
+
+public:
+    float speed_to_rpm(float speed_ms) {
+        return speed_ms*wheel_perim_len_div60_recip;
+    }
+  
+    float rpm_to_speed(float rpm) {
+        return rpm*wheel_perim_len_div60;
+    }
+
+    void twistToWheelSpeeds(float speed_lin_x, float speed_ang_z,
+    float *speed_right, float *speed_left) {
+        float ang_component = speed_ang_z*base_wheel_track*0.5f;
+        *speed_right = speed_lin_x + ang_component;
+        *speed_left  = speed_lin_x - ang_component;
+    }
 
 };

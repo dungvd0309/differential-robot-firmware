@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include "ros_interface.h"
 #include "motors.h"
-#include "motor_encoders.h"
 #include "motor_controller.h"
 #include "robot_config.h"
 
@@ -16,10 +15,9 @@ void setup()
   Serial.begin(115200); 
   setupEncoders();
   setupMotors();
-  // Đặt tốc độ mục tiêu ban đầu cho PID, ví dụ 100 RPM
-  leftMotor.setTargetRPM(100);
+  
   // FreeRTOS
-  // xTaskCreatePinnedToCore(ros_task, "ros", 8192, NULL, 2, NULL, 0);
+  xTaskCreatePinnedToCore(ros_task, "ros", 8192, NULL, 2, NULL, 0);
   
 }
 
@@ -30,34 +28,42 @@ void ros_task(void*) {
 
 void loop()
 {
-  leftMotor.update();
+  // leftMotor.update();
   // rightMotor.update();
-  Serial.print(leftMotor.getEncoderValue());
-  Serial.print(' ');
-  Serial.print(leftMotor.getCurrentRPM());
-  Serial.print("| ");
-  Serial.print("Kp = ");
-  Serial.print(leftMotor.getPIDKp(), 5);
-  Serial.print(" Ki = ");
-  Serial.print(leftMotor.getPIDKi(), 5);
-  Serial.print(" Kd = ");
-  Serial.println(leftMotor.getPIDKd(), 5);
+  // Serial.print(leftMotor.getEncoderValue());
+  // Serial.print(' ');
+  // Serial.print(leftMotor.getCurrentRPM());
+  // Serial.print("| ");
+  // Serial.print("Kp = ");
+  // Serial.print(leftMotor.getPIDKp(), 5);
+  // Serial.print(" Ki = ");
+  // Serial.print(leftMotor.getPIDKi(), 5);
+  // Serial.print(" Kd = ");
+  // Serial.println(leftMotor.getPIDKd(), 5);
 
 
-  // // Gửi dữ liệu cho Serial Plotter
-  Serial.print("0:0 ");
-  Serial.print("Input:"); Serial.print(leftMotor.getCurrentRPM(), 2); Serial.print(" ");
-  Serial.print("Setpoint:"); Serial.print(leftMotor.getTargetRPM(), 2); Serial.print(" ");
-  Serial.print("Output:"); Serial.print(leftMotor.getCurrentPWM(), 2); Serial.print(" ");
-  Serial.println();
-  // // Kiểm tra có dữ liệu Serial mới nhập
-  if (stringComplete) {
-    parseInput(inputString);
-    inputString = "";
-    stringComplete = false;
-  }
+  // // // Gửi dữ liệu cho Serial Plotter
+  // Serial.print("0:0 ");
+  // Serial.print("Input:"); Serial.print(leftMotor.getCurrentRPM(), 2); Serial.print(" ");
+  // Serial.print("Setpoint:"); Serial.print(leftMotor.getTargetRPM(), 2); Serial.print(" ");
+  // Serial.print("Output:"); Serial.print(leftMotor.getCurrentPWM(), 2); Serial.print(" ");
+  // Serial.println();
+  // // // Kiểm tra có dữ liệu Serial mới nhập
+  // if (stringComplete) {
+  //   parseInput(inputString);
+  //   inputString = "";
+  //   stringComplete = false;
+  // }
 
   // vTaskDelay(pdMS_TO_TICKS(1000)); 
+
+  leftMotor.update();
+  rightMotor.update();
+
+  // Serial.print(leftMotor.getCurrentRPM());
+  // Serial.print(' ');
+  // Serial.print(rightMotor.getCurrentRPM());
+  // Serial.println();
   delay(10);
   
 }
