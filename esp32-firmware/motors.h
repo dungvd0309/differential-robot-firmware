@@ -75,3 +75,8 @@ void setupMotors() {
   rightMotor.init(cfg.WHEEL_CPR, cfg.motor_driver_pid_kp, cfg.motor_driver_pid_ki, cfg.motor_driver_pid_kd, cfg.motor_max_rpm);
   
 }
+
+void setMotorsRPM(float left_rpm, float right_rpm) {
+  leftMotor.setTargetRPM(left_rpm);
+  rightMotor.setTargetRPM(right_rpm);
+}

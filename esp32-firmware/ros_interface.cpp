@@ -1,5 +1,5 @@
 #include "ros_interface.h"
-#include "motor_controller.h"
+#include "motors.h"
 #include "robot_config.h"
 
 #include <micro_ros_arduino.h>
@@ -24,8 +24,6 @@ static rclc_support_t support;
 static rcl_allocator_t allocator;
 static rcl_node_t node;
 static rcl_timer_t timer;
-
-extern MotorController leftMotor, rightMotor;
 
 extern CONFIG cfg;
 
@@ -107,9 +105,8 @@ void subscription_callback(const void *msgin) {
     &twist_target_speed_right, &twist_target_speed_left);
     float twist_target_rpm_right = cfg.speed_to_rpm(twist_target_speed_right);
     float twist_target_rpm_left = cfg.speed_to_rpm(twist_target_speed_left);
-
-    leftMotor.setTargetRPM(twist_target_rpm_left);
-    rightMotor.setTargetRPM(twist_target_rpm_right);
+    
+    setMotorsRPM(twist_target_rpm_left, twist_target_rpm_right);
 }
 
 void ros_init(bool wifi_mode)
@@ -137,7 +134,7 @@ void ros_init(bool wifi_mode)
         &publisher,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState), 
-        "wheel_pose"));
+        "hardware_states"));
     
     // create timer
     const unsigned int timer_timeout = 10; // 50hz
@@ -152,7 +149,7 @@ void ros_init(bool wifi_mode)
         &subscriber,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "/cmd_vel"));
+        "/cmd_vel1"));
     
     // create executor
     RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
