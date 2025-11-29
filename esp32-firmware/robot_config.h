@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Arduino.h>
+
 class CONFIG
 {
 public:
@@ -8,7 +10,7 @@ public:
     // static constexpr float WHEEL_SEPARATION = 0.13;            // m
     static constexpr float GEAR_RATIO = 20.4; 
     static constexpr int ENCODER_CPR = 11;  // số xung trên 1 vòng encoder (COUNTS_PER_REVOLUTION) 
-    static constexpr int DECODE_FACTOR = 1; // hệ số giải mã xung A/B (x1, x2, x4), trong file motor_encoder đang là x1 (đếm RISING của S1)
+    static constexpr int DECODE_FACTOR = 4; // hệ số giải mã xung A/B (x1, x2, x4)
     static constexpr float WHEEL_CPR = GEAR_RATIO * ENCODER_CPR * DECODE_FACTOR; // số xung trên 1 vòng trục (COUNTS_PER_REVOLUTION)
     
     static constexpr int PWM_FREQUENCY = 20000; // Hz
@@ -33,7 +35,6 @@ public:
     float motor_driver_pid_kd = 0;
 
     // motor driver pins 
-    // 32 33 25 26 27 14 ENB -> ENA
     uint8_t mot_left_drv_gpio_pwm = 14; // ENA
     uint8_t mot_left_drv_gpio_in1 = 27; // IN1
     uint8_t mot_left_drv_gpio_in2 = 26; // IN2

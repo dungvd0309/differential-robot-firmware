@@ -8,11 +8,36 @@ extern CONFIG cfg;
 
 MotorController leftMotor, rightMotor;
 
-void IRAM_ATTR isrLeft() {
-  leftMotor.tickEncoder(digitalRead(cfg.mot_left_enc_gpio_b) == HIGH);
+// void IRAM_ATTR isrLeft() {
+//   leftMotor.tickEncoder(digitalRead(cfg.mot_left_enc_gpio_b) == HIGH);
+// }
+
+// void IRAM_ATTR isrRight() {
+//   rightMotor.tickEncoder(digitalRead(cfg.mot_right_enc_gpio_b) == HIGH);
+// }
+
+void IRAM_ATTR quadEncoderALeftISR() {
+  byte enc_a = digitalRead(cfg.mot_left_enc_gpio_a_fg);
+  byte enc_b = digitalRead(cfg.mot_left_enc_gpio_b);
+  leftMotor.tickEncoder(enc_a == enc_b);
 }
-void IRAM_ATTR isrRight() {
-  rightMotor.tickEncoder(digitalRead(cfg.mot_right_enc_gpio_b) == HIGH);
+
+void IRAM_ATTR quadEncoderARightISR() {
+  byte enc_a = digitalRead(cfg.mot_right_enc_gpio_a_fg);
+  byte enc_b = digitalRead(cfg.mot_right_enc_gpio_b);
+  rightMotor.tickEncoder(enc_a == enc_b);
+}
+
+void IRAM_ATTR quadEncoderBLeftISR() {
+  byte enc_a = digitalRead(cfg.mot_left_enc_gpio_a_fg);
+  byte enc_b = digitalRead(cfg.mot_left_enc_gpio_b);
+  leftMotor.tickEncoder(enc_a != enc_b);
+}
+
+void IRAM_ATTR quadEncoderBRightISR() {
+  byte enc_a = digitalRead(cfg.mot_right_enc_gpio_a_fg);
+  byte enc_b = digitalRead(cfg.mot_right_enc_gpio_b);
+  rightMotor.tickEncoder(enc_a != enc_b);
 }
 
 void setMotorPWM(MotorController * motor, float pwm) {
@@ -24,8 +49,7 @@ void setMotorPWM(MotorController * motor, float pwm) {
   uint8_t in2_pin = is_right ? cfg.mot_right_drv_gpio_in2 : cfg.mot_left_drv_gpio_in2;
 
   int max_pwm = cfg.motor_driver_max_pwm;
-  // int min_pwm = cfg.motor_driver_min_pwm;
-  int pwm_magnitude = round(abs(pwm) * max_pwm);
+  int min_pwm = cfg.motor_driver_min_pwm;
 
   if (pwm == 0) {
     digitalWrite(in1_pin, HIGH);
@@ -39,18 +63,31 @@ void setMotorPWM(MotorController * motor, float pwm) {
     digitalWrite(in1_pin, HIGH);
     digitalWrite(in2_pin, LOW);
   }
+
+  int pwm_magnitude = round(abs(pwm) * max_pwm);
+  int mapped_pwm = map(pwm_magnitude, 0, max_pwm, min_pwm, max_pwm);
   ledcAttachPin(pwm_pin, pwm_channel);
-  ledcWrite(pwm_channel, pwm_magnitude);
+  ledcWrite(pwm_channel, mapped_pwm);
 }
 
 void setupEncoders() {
+  // pinMode(cfg.mot_left_enc_gpio_a_fg, INPUT_PULLUP);
+  // pinMode(cfg.mot_left_enc_gpio_b, INPUT_PULLUP);
+  // attachInterrupt(cfg.mot_left_enc_gpio_a_fg, isrLeft, RISING);
+
+  // pinMode(cfg.mot_right_enc_gpio_a_fg, INPUT_PULLUP);
+  // pinMode(cfg.mot_right_enc_gpio_b, INPUT_PULLUP);
+  // attachInterrupt(cfg.mot_right_enc_gpio_a_fg, isrRight, RISING);
+
   pinMode(cfg.mot_left_enc_gpio_a_fg, INPUT_PULLUP);
   pinMode(cfg.mot_left_enc_gpio_b, INPUT_PULLUP);
-  attachInterrupt(cfg.mot_left_enc_gpio_a_fg, isrLeft, RISING);
+  attachInterrupt(cfg.mot_left_enc_gpio_a_fg, quadEncoderALeftISR, CHANGE);
+  attachInterrupt(cfg.mot_left_enc_gpio_b, quadEncoderBLeftISR, CHANGE);
 
   pinMode(cfg.mot_right_enc_gpio_a_fg, INPUT_PULLUP);
   pinMode(cfg.mot_right_enc_gpio_b, INPUT_PULLUP);
-  attachInterrupt(cfg.mot_right_enc_gpio_a_fg, isrRight, RISING);
+  attachInterrupt(cfg.mot_right_enc_gpio_a_fg, quadEncoderARightISR, CHANGE);
+  attachInterrupt(cfg.mot_right_enc_gpio_b, quadEncoderBRightISR, CHANGE);
 }
 
 void setupMotors() {
@@ -79,4 +116,9 @@ void setupMotors() {
 void setMotorsRPM(float left_rpm, float right_rpm) {
   leftMotor.setTargetRPM(left_rpm);
   rightMotor.setTargetRPM(right_rpm);
+}
+
+void updateMotors() {
+  leftMotor.update();
+  rightMotor.update();
 }

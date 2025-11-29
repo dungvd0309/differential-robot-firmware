@@ -12,7 +12,7 @@ class MotorController {
     
     PID pid;
     float kp, ki, kd;
-    double pidPWM; // pid output (-1 to 1)
+    double pidPWM; // pid output (-1.0 to 1.0)
     double targetRPM; // pid target
     double measuredRPM; // pid input
     float maxRPM;
@@ -20,6 +20,7 @@ class MotorController {
     
     float encoderPPR;
     float ticksPerMicroSecToRPM;
+    float ticksToRad;
 
     unsigned int updatePeriodUs;
     long int encPrev;
@@ -45,6 +46,7 @@ class MotorController {
     float getPIDKi();
     float getPIDKd();
     long int getEncoderValue() const;
+    float getEncoderRadValue() const;
 
   public:
     void tickEncoder(bool increment) {

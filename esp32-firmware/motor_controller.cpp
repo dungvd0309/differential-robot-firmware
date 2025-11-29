@@ -6,13 +6,15 @@ void MotorController::init(float encoderPPR, float kp, float ki, float kd, float
     this->encoderPPR = encoderPPR;
     this->maxRPM = maxRPM;
     this->ticksPerMicroSecToRPM = 1e6 * 60.0 / this->encoderPPR;
+    this->ticksToRad = 2 * PI / this->encoderPPR;
 
     encoder = 0;
     targetRPM = 0;
     measuredRPM = 0;
     pidPWM = 0;
     encPrev = 0;
-    tickSampleTimePrev = 0;
+    tickSampleTimePrev = micros();
+    setPointHasChanged = false;
 
     float pidPeriod = 0.03;
     updatePeriodUs = (unsigned int) round(pidPeriod * 1e6);
@@ -81,10 +83,6 @@ float MotorController::getTargetRPM() {
     return targetRPM;
 }
 
-long int MotorController::getEncoderValue() const {
-    return encoder;
-}
-
 float MotorController::getPIDKp() {
   return pid.GetKpe();
 }
@@ -97,17 +95,29 @@ float MotorController::getPIDKd() {
   return pid.GetKd();
 }
 
+long int MotorController::getEncoderValue() const {
+    return encoder;
+}
+
+float MotorController::getEncoderRadValue() const {
+    return encoder * ticksToRad;
+}
+
 void MotorController::update() {
     unsigned long tickTime = micros();
     unsigned long tickTimeDelta = tickTime - tickSampleTimePrev;
+    if (tickTimeDelta == 0) return;
     if((tickTimeDelta < updatePeriodUs) && !setPointHasChanged)
-        return;
+      return;
+    
     tickSampleTimePrev = tickTime;
 
     long int encNow = getEncoderValue();
     long int encDelta = encNow - encPrev;
     encPrev = encNow;
 
+    
+    
     float ticksPerMicroSec = ((float) encDelta) / ((float) tickTimeDelta);
     measuredRPM = ticksPerMicroSec * ticksPerMicroSecToRPM;
 
