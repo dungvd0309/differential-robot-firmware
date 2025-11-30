@@ -47,6 +47,7 @@ class MotorController {
     float getPIDKd();
     long int getEncoderValue() const;
     float getEncoderRadValue() const;
+    void enablePID(bool en);
 
   public:
     void tickEncoder(bool increment) {

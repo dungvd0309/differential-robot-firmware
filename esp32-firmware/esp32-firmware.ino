@@ -20,7 +20,12 @@ void setup()
   // FreeRTOS
   xTaskCreatePinnedToCore(motor_task, "motor", 8192, NULL, 2, NULL, 0);
   xTaskCreatePinnedToCore(ros_task, "ros", 10240, NULL, 2, NULL, 1); // Increased stack for ROS
+  // xTaskCreatePinnedToCore(temp, "temp", 8192, NULL, 2, NULL, 1);
   
+}
+
+void motor_task(void*) {
+  for(;;){ updateMotors(); vTaskDelay(pdMS_TO_TICKS(10)); } // Control loop at 100Hz
 }
 
 void ros_task(void*) {
@@ -28,13 +33,17 @@ void ros_task(void*) {
   for(;;){ ros_spin_some(); vTaskDelay(pdMS_TO_TICKS(10)); } // Small delay to yield CPU
 }
 
-void motor_task(void*) {
-  for(;;){ updateMotors(); vTaskDelay(pdMS_TO_TICKS(10)); } // Control loop at 100Hz
-}
+// void temp(void*) {
+//   leftMotor.enablePID(false);
+//   rightMotor.enablePID(false);
+//   for(;;){ Serial.print("Left encoder: ");
+//   Serial.print(leftMotor.getEncoderValue());
+//   Serial.print(", Right encoder: ");
+//   Serial.println(rightMotor.getEncoderValue());
+//   vTaskDelay(pdMS_TO_TICKS(20));} // Control loop at 100Hz
+// }
 
-void loop()
-{
-}
+void loop() {}
 
 // // Hàm phân tích chuỗi serial dạng "<setpoint> <kp> <ki> <kd>"
 // void parseInput(String s) {

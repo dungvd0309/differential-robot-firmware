@@ -103,6 +103,10 @@ float MotorController::getEncoderRadValue() const {
     return encoder * ticksToRad;
 }
 
+void MotorController::enablePID(bool en) {
+  pid.enable(en);
+}
+
 void MotorController::update() {
     unsigned long tickTime = micros();
     unsigned long tickTimeDelta = tickTime - tickSampleTimePrev;
