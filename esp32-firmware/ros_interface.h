@@ -1,4 +1,3 @@
-#include "HardwareSerial.h"
 #pragma once
 
 #include "robot_config.h"
@@ -19,9 +18,9 @@
 #include <geometry_msgs/msg/twist.h>
 
 static rcl_publisher_t publisher; 
-static sensor_msgs__msg__JointState pub_msg;
-rcl_subscription_t subscriber;
-geometry_msgs__msg__Twist sub_msg;
+static sensor_msgs__msg__JointState joint_state_pub_msg;
+rcl_subscription_t cmd_vel_subscriber;
+geometry_msgs__msg__Twist twist_sub_msg;
 static rclc_executor_t executor;
 static rclc_support_t support;
 static rcl_allocator_t allocator;
@@ -49,12 +48,12 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        pub_msg.position.data[0] = leftMotor.getEncoderRadValue();
-        pub_msg.velocity.data[0] = cfg.rpm_to_speed(leftMotor.getCurrentRPM());
-        pub_msg.position.data[1] = rightMotor.getEncoderRadValue();
-        pub_msg.velocity.data[1] = cfg.rpm_to_speed(rightMotor.getCurrentRPM());
+        joint_state_pub_msg.position.data[0] = leftMotor.getEncoderRadValue();
+        joint_state_pub_msg.velocity.data[0] = cfg.rpm_to_speed(leftMotor.getCurrentRPM());
+        joint_state_pub_msg.position.data[1] = rightMotor.getEncoderRadValue();
+        joint_state_pub_msg.velocity.data[1] = cfg.rpm_to_speed(rightMotor.getCurrentRPM());
 
-        RCSOFTCHECK(rcl_publish(&publisher, &pub_msg, NULL));
+        RCSOFTCHECK(rcl_publish(&publisher, &joint_state_pub_msg, NULL));
     }
 }
 
@@ -62,29 +61,29 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 static void ros_msg_init()
 {
     const char * joint_names[] = {"left_wheel_joint", "right_wheel_joint"};
-    sensor_msgs__msg__JointState__init(&pub_msg);
-    rosidl_runtime_c__String__Sequence__init(&pub_msg.name, 2);
-    rosidl_runtime_c__String__assign(&pub_msg.name.data[0], joint_names[0]);
-    rosidl_runtime_c__String__assign(&pub_msg.name.data[1], joint_names[1]);
+    sensor_msgs__msg__JointState__init(&joint_state_pub_msg);
+    rosidl_runtime_c__String__Sequence__init(&joint_state_pub_msg.name, 2);
+    rosidl_runtime_c__String__assign(&joint_state_pub_msg.name.data[0], joint_names[0]);
+    rosidl_runtime_c__String__assign(&joint_state_pub_msg.name.data[1], joint_names[1]);
 
-    pub_msg.position.data = (double*)malloc(sizeof(double) * 2);
-    pub_msg.position.size = 2;
-    pub_msg.position.capacity = 2;
-    pub_msg.position.data[0] = 0.0;
-    pub_msg.position.data[1] = 0.0;
+    joint_state_pub_msg.position.data = (double*)malloc(sizeof(double) * 2);
+    joint_state_pub_msg.position.size = 2;
+    joint_state_pub_msg.position.capacity = 2;
+    joint_state_pub_msg.position.data[0] = 0.0;
+    joint_state_pub_msg.position.data[1] = 0.0;
 
-    pub_msg.velocity.data = (double*)malloc(sizeof(double) * 2);
-    pub_msg.velocity.size = 2;
-    pub_msg.velocity.capacity = 2;
-    pub_msg.velocity.data[0] = 0.0;
-    pub_msg.velocity.data[1] = 0.0;
+    joint_state_pub_msg.velocity.data = (double*)malloc(sizeof(double) * 2);
+    joint_state_pub_msg.velocity.size = 2;
+    joint_state_pub_msg.velocity.capacity = 2;
+    joint_state_pub_msg.velocity.data[0] = 0.0;
+    joint_state_pub_msg.velocity.data[1] = 0.0;
 
-    pub_msg.header.frame_id.data = NULL;
-    pub_msg.header.frame_id.size = 0;
-    pub_msg.header.frame_id.capacity = 0;
+    joint_state_pub_msg.header.frame_id.data = NULL;
+    joint_state_pub_msg.header.frame_id.size = 0;
+    joint_state_pub_msg.header.frame_id.capacity = 0;
 }
 
-//twist message cb
+// /cmd_vel topic callback
 void subscription_callback(const void *msgin) {
     const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
 
@@ -146,7 +145,7 @@ void ros_init(bool wifi_mode = true)
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState), 
         "/encoders/data_raw"));
-    Serial.println("Created publisher");
+    Serial.println("Created /encoders/data_raw publisher");
     
     // create timer
     const unsigned int timer_timeout = 20; // 50hz
@@ -159,16 +158,16 @@ void ros_init(bool wifi_mode = true)
 
     // create subscriber
     RCCHECK(rclc_subscription_init_default(
-        &subscriber,
+        &cmd_vel_subscriber,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "/cmd_vel"));
-    Serial.println("Created subcriber");
+    Serial.println("Created /cmd_vel subcriber");
     
     // create executor
     RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
     RCCHECK(rclc_executor_add_timer(&executor, &timer));
-    RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &sub_msg, &subscription_callback, ON_NEW_DATA));
+    RCCHECK(rclc_executor_add_subscription(&executor, &cmd_vel_subscriber, &twist_sub_msg, &subscription_callback, ON_NEW_DATA));
     Serial.println("Created executor");
 
     // initialize ROS message
