@@ -4,6 +4,7 @@
 #include "motors.h"
 #include "motor_controller.h"
 #include "robot_config.h"
+#include "imu_interface.h"
 
 CONFIG cfg;
 
@@ -16,21 +17,23 @@ void setup()
   Serial.println("Setting up robot...");
   setupEncoders();
   setupMotors();
-
+  setupImu();
   // FreeRTOS
   xTaskCreatePinnedToCore(motor_task, "motor", 8192, NULL, 2, NULL, 0);
-  xTaskCreatePinnedToCore(ros_task, "ros", 10240, NULL, 2, NULL, 1); // Increased stack for ROS
-  // xTaskCreatePinnedToCore(temp, "temp", 8192, NULL, 2, NULL, 1);
-  
+  xTaskCreatePinnedToCore(imu_task, "imu", 8192, NULL, 2, NULL, 0);
+  xTaskCreatePinnedToCore(ros_task, "ros", 10240, NULL, 2, NULL, 1); 
+}
+void imu_task(void*) {
+  for(;;){ updateImu(); vTaskDelay(pdMS_TO_TICKS(10)); }
 }
 
 void motor_task(void*) {
-  for(;;){ updateMotors(); vTaskDelay(pdMS_TO_TICKS(10)); } // Control loop at 100Hz
+  for(;;){ updateMotors(); vTaskDelay(pdMS_TO_TICKS(10)); } 
 }
 
 void ros_task(void*) {
   ros_init(); 
-  for(;;){ ros_spin_some(); vTaskDelay(pdMS_TO_TICKS(10)); } // Small delay to yield CPU
+  for(;;){ ros_spin_some(); vTaskDelay(pdMS_TO_TICKS(10)); } 
 }
 
 // void temp(void*) {

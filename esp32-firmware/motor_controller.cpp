@@ -120,8 +120,6 @@ void MotorController::update() {
     long int encDelta = encNow - encPrev;
     encPrev = encNow;
 
-    
-    
     float ticksPerMicroSec = ((float) encDelta) / ((float) tickTimeDelta);
     measuredRPM = ticksPerMicroSec * ticksPerMicroSecToRPM;
 

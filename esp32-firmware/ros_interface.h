@@ -1,10 +1,14 @@
+#include "esp32-hal.h"
+#include <sys/_types.h>
 #pragma once
 
 #include "robot_config.h"
 #include "motors.h"
 #include "motor_controller.h"
+#include "imu_interface.h"
 
 #include <micro_ros_arduino.h>
+#include "rmw_microros/time_sync.h"
 
 #include <stdio.h>
 #include <rcl/rcl.h>
@@ -12,15 +16,18 @@
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 
+#include <rosidl_runtime_c/string_functions.h>
 #include <std_msgs/msg/float32.h>
 #include <sensor_msgs/msg/joint_state.h>
-#include <rosidl_runtime_c/string_functions.h>
 #include <geometry_msgs/msg/twist.h>
 
-static rcl_publisher_t publisher; 
+static rcl_publisher_t encoders_publisher; 
 static sensor_msgs__msg__JointState joint_state_pub_msg;
+static rcl_publisher_t imu_publisher; 
+static sensor_msgs__msg__Imu imu_pub_msg;
 rcl_subscription_t cmd_vel_subscriber;
 geometry_msgs__msg__Twist twist_sub_msg;
+
 static rclc_executor_t executor;
 static rclc_support_t support;
 static rcl_allocator_t allocator;
@@ -29,6 +36,8 @@ static rcl_timer_t timer;
 
 extern CONFIG cfg;
 extern MotorController leftMotor, rightMotor;
+
+unsigned long last_sync_time;
 
 #define LED_PIN 2
 
@@ -48,12 +57,25 @@ static void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
+        // Encoder to msg
         joint_state_pub_msg.position.data[0] = leftMotor.getEncoderRadValue();
         joint_state_pub_msg.velocity.data[0] = cfg.rpm_to_speed(leftMotor.getCurrentRPM());
         joint_state_pub_msg.position.data[1] = rightMotor.getEncoderRadValue();
         joint_state_pub_msg.velocity.data[1] = cfg.rpm_to_speed(rightMotor.getCurrentRPM());
 
-        RCSOFTCHECK(rcl_publish(&publisher, &joint_state_pub_msg, NULL));
+        // IMU to msg
+        imuToMsg(imu_pub_msg);
+
+        // Bind timestamp to msg 
+        int64_t time_ns = rmw_uros_epoch_nanos();
+        joint_state_pub_msg.header.stamp.sec = time_ns / 1000000000;
+        joint_state_pub_msg.header.stamp.nanosec = time_ns % 1000000000;
+        imu_pub_msg.header.stamp.sec = joint_state_pub_msg.header.stamp.sec;
+        imu_pub_msg.header.stamp.nanosec = joint_state_pub_msg.header.stamp.nanosec;
+        
+        // Publish msg
+        RCSOFTCHECK(rcl_publish(&encoders_publisher, &joint_state_pub_msg, NULL));
+        RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_pub_msg, NULL));
     }
 }
 
@@ -78,9 +100,9 @@ static void ros_msg_init()
     joint_state_pub_msg.velocity.data[0] = 0.0;
     joint_state_pub_msg.velocity.data[1] = 0.0;
 
-    joint_state_pub_msg.header.frame_id.data = NULL;
-    joint_state_pub_msg.header.frame_id.size = 0;
-    joint_state_pub_msg.header.frame_id.capacity = 0;
+    // joint_state_pub_msg.header.frame_id.data = NULL;
+    // joint_state_pub_msg.header.frame_id.size = 0;
+    // joint_state_pub_msg.header.frame_id.capacity = 0;
 }
 
 // /cmd_vel topic callback
@@ -114,6 +136,7 @@ void subscription_callback(const void *msgin) {
 
 void ros_init(bool wifi_mode = true)
 {   
+    // set transmission
     if(wifi_mode) {
         Serial.print("Connecting to "); Serial.print(cfg.SSID); Serial.println("...");
         set_microros_wifi_transports(cfg.SSID, cfg.PASSWORD, cfg.DESTINATION_IP, cfg.DESTINATION_PORT); // wifi
@@ -129,23 +152,35 @@ void ros_init(bool wifi_mode = true)
     delay(2000);
 
     allocator = rcl_get_default_allocator();
-    Serial.println("Created allocator");
+    Serial.println("Created allocator. Connecting to micro_ros_agent...");
 
     // create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
     Serial.println("Created init options");
+
+    // time sync
+    RCCHECK(rmw_uros_sync_session(1000));
+    last_sync_time = millis();
+    Serial.println("Time synced");
 
     // create node
     RCCHECK(rclc_node_init_default(&node, "esp32_node", "", &support));
     Serial.println("Created node");
 
     // create publisher
-    RCCHECK(rclc_publisher_init_best_effort(
-        &publisher,
+    RCCHECK(rclc_publisher_init_default(
+        &encoders_publisher,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState), 
         "/encoders/data_raw"));
     Serial.println("Created /encoders/data_raw publisher");
+
+    RCCHECK(rclc_publisher_init_default(
+        &imu_publisher,
+        &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), 
+        "/imu/data_raw"));
+    Serial.println("Created /imu/data_raw publisher");
     
     // create timer
     const unsigned int timer_timeout = 20; // 50hz
@@ -165,7 +200,7 @@ void ros_init(bool wifi_mode = true)
     Serial.println("Created /cmd_vel subcriber");
     
     // create executor
-    RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
+    RCCHECK(rclc_executor_init(&executor, &support.context, 3, &allocator));
     RCCHECK(rclc_executor_add_timer(&executor, &timer));
     RCCHECK(rclc_executor_add_subscription(&executor, &cmd_vel_subscriber, &twist_sub_msg, &subscription_callback, ON_NEW_DATA));
     Serial.println("Created executor");
@@ -177,8 +212,16 @@ void ros_init(bool wifi_mode = true)
     Serial.println("micro-ROS initialised!");
 }      
 
+void ros_time_sync() {
+    if (millis() - last_sync_time > 60000) {
+      rmw_uros_sync_session(10); 
+      last_sync_time = millis();
+  }
+}
+
 void ros_spin_some(int delay = 5)
 {
     rclc_executor_spin_some(&executor, RCL_MS_TO_NS(delay));
+    ros_time_sync();
 }
 

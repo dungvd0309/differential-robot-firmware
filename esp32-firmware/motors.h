@@ -105,12 +105,14 @@ void setupMotors() {
   // ledcAttachPin(cfg.mot_left_drv_gpio_pwm, cfg.MOT_PWM_LEFT_CHANNEL);
   // ledcAttachPin(cfg.mot_right_drv_gpio_pwm, cfg.MOT_PWM_RIGHT_CHANNEL);
 
-  leftMotor.setPWMCallback(setMotorPWM);
-  rightMotor.setPWMCallback(setMotorPWM);
-
   leftMotor.init(cfg.WHEEL_CPR, cfg.motor_driver_pid_kp, cfg.motor_driver_pid_ki, cfg.motor_driver_pid_kd, cfg.motor_max_rpm);
   rightMotor.init(cfg.WHEEL_CPR, cfg.motor_driver_pid_kp, cfg.motor_driver_pid_ki, cfg.motor_driver_pid_kd, cfg.motor_max_rpm);
   
+  leftMotor.setPWMCallback(setMotorPWM);
+  rightMotor.setPWMCallback(setMotorPWM);
+
+  leftMotor.enablePID(true);
+  rightMotor.enablePID(true);
 }
 
 void setMotorsRPM(float left_rpm, float right_rpm) {
